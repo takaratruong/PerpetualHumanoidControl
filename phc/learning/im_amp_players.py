@@ -27,13 +27,13 @@ import clip
 
 
 #TAKARA
-sys.path.insert(0,'/move/u/takaraet/motion_mimic')
-from algs.diff_policy import DiffusionPolicy
+# sys.path.insert(0,'/move/u/takaraet/motion_mimic')
+# from algs.diff_policy import DiffusionPolicy
 
 # sys.path.insert(0,'/move/u/takaraet/diffusion_policy')
 # from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
-sys.path.insert(0,'/move/u/takaraet/my_diffusion_policy')
+sys.path.insert(0,'/move/u/mpiseno/src/my_diffusion_policy')
 from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
 COLLECT_Z = False
@@ -289,10 +289,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         if self.mode == 'diff':
             
             # My Policy     
-            policy_path = "/move/u/takaraet/motion_mimic/results/diff_models/phc_diff/model_iter_800.pt" #300 turns well, 600 best so far (10 envs) 2 obs, (20 envs gets stuck) 2 obs, 15 envs get stuck 2obs, 15 envs 300 3 obs 
-            exp_state = torch.load(policy_path)     
-            cfg = exp_state['config']
-            my_model = DiffusionPolicy(exp_state=exp_state) 
+            # policy_path = "/move/u/takaraet/motion_mimic/results/diff_models/phc_diff/model_iter_800.pt" #300 turns well, 600 best so far (10 envs) 2 obs, (20 envs gets stuck) 2 obs, 15 envs get stuck 2obs, 15 envs 300 3 obs 
+            # exp_state = torch.load(policy_path)     
+            # cfg = exp_state['config']
+            # my_model = DiffusionPolicy(exp_state=exp_state) 
 
             # POLICY DIFFUSION POLICY: ###################################################
                 
