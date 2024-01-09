@@ -19,8 +19,13 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
         self.has_lateral = cfg["env"].get("has_lateral", False)
         self.z_activation = cfg["env"].get("z_activation", "relu")
 
-        super().__init__(cfg=cfg, sim_params=sim_params, physics_engine=physics_engine, device_type=device_type, device_id=device_id, headless=headless)
+        self.act_collect = None 
+        self.mean_action = None
+        self.noisy_action = None
+        self.use_noisy_action = False 
 
+        super().__init__(cfg=cfg, sim_params=sim_params, physics_engine=physics_engine, device_type=device_type, device_id=device_id, headless=headless)
+        
         if self.has_pnn:
             assert (len(self.models_path) == 1)
             pnn_ck = torch_ext.load_checkpoint(self.models_path[0])
@@ -41,31 +46,47 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
         task_obs_detail['num_prim'] = self.num_prim
         return task_obs_detail
 
-    def step(self, weights):
+    def step(self, weights): # TAkara Edit
 
         # if self.dr_randomizations.get('actions', None):
         #     actions = self.dr_randomizations['actions']['noise_lambda'](actions)
         # if flags.server_mode:
-            # t_s = time.time()
-        
-        with torch.no_grad():
-            # Apply trained Model.
-            curr_obs = ((self.obs_buf - self.running_mean.float()) / torch.sqrt(self.running_var.float() + 1e-05))
-            
-            curr_obs = torch.clamp(curr_obs, min=-5.0, max=5.0)
-            if self.discrete_mcp:
-                max_idx = torch.argmax(weights, dim=1)
-                weights = torch.nn.functional.one_hot(max_idx, num_classes=self.num_prim).float()
-            
-            if self.has_pnn:
-                _, actions = self.pnn(curr_obs)
+        # t_s = time.time()
+        # import ipdb; ipdb.set_trace()
+        if weights.shape[1]==4:
                 
-                x_all = torch.stack(actions, dim=1)
-            else:
-                x_all = torch.stack([net(curr_obs) for net in self.actors], dim=1)
-            # print(weights)
-            actions = torch.sum(weights[:, :, None] * x_all, dim=1)
+            with torch.no_grad():
+                # Apply trained Model.
+                curr_obs = ((self.obs_buf - self.running_mean.float()) / torch.sqrt(self.running_var.float() + 1e-05))
                 
+                curr_obs = torch.clamp(curr_obs, min=-5.0, max=5.0)
+                if self.discrete_mcp:
+                    max_idx = torch.argmax(weights, dim=1)
+                    weights = torch.nn.functional.one_hot(max_idx, num_classes=self.num_prim).float()
+                
+                if self.has_pnn:
+                    _, actions = self.pnn(curr_obs)
+                    
+                    x_all = torch.stack(actions, dim=1)
+                else:
+                    x_all = torch.stack([net(curr_obs) for net in self.actors], dim=1)
+                actions = torch.sum(weights[:, :, None] * x_all, dim=1)
+
+            # COLLECTING ACTIONS
+            self.mean_action = actions.squeeze().cpu().numpy() 
+            # self.noisy_action = torch.normal(mean=actions,std=.03).clone().squeeze().cpu().numpy() # NOISE
+            # self.act_collect = np.vstack((self.act_collect, actions.squeeze().cpu().numpy())) if self.act_collect is not None else actions.squeeze().cpu().numpy() # TAKARA
+            # print('actions: ', self.act_collect.shape)
+            
+            # if self.act_collect.shape[0] == 500: 
+            #     np.save('actions.npy', self.act_collect)
+            
+            if self.use_noisy_action:
+                # actions = torch.normal(mean=actions,std=.025).clone() # NOISE
+                actions = torch.normal(mean=actions,std=.1).clone() # NOISE #.04 # max noise:  #.15 falls , .12 okay but bounces around
+        else:
+            actions = weights 
+
         # actions = x_all[:, 3]  # Debugging
         # apply actions
         self.pre_physics_step(actions)

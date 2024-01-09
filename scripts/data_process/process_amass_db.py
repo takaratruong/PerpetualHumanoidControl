@@ -189,7 +189,7 @@ def process_qpos_list(qpos_list):
         with torch.no_grad():
             amass_pose = amass_pose[:bound]
             batch_size = amass_pose.shape[0]
-            import ipdb; ipdb.set_trace()
+            # import ipdb; ipdb.set_trace()
             amass_pose = np.concatenate([amass_pose[:, :66], np.zeros((batch_size, 6))], axis=1) # We use SMPL and not SMPLH
             
             pose_aa = torch.tensor(amass_pose)  # After sampling the bound
@@ -225,9 +225,9 @@ def process_qpos_list(qpos_list):
 
 
 amass_splits = {
-    'vald': ['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
-    'test': ['Transitions_mocap', 'SSM_synced'],
-    'train': ['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
+    'vald': ['KIT'], #['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
+    'test': ['KIT'],# ['Transitions_mocap', 'SSM_synced'],
+    'train': ['KIT'],#['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
 }
 
 amass_split_dict = {}
@@ -238,12 +238,13 @@ for k, v in amass_splits.items():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", default=False)
-    parser.add_argument("--path", type=str, default="sample_data/amass_db_smplh.pt")
+    parser.add_argument("--path", type=str, default="out/amass_db_smplh.pt")
     args = parser.parse_args()
+    print('start')
 
     np.random.seed(0)
     flags.debug = args.debug
-    take_num = "copycat_take5"
+    take_num = "my_take"
     amass_seq_data = {}
     seq_length = -1
 
@@ -259,14 +260,14 @@ if __name__ == "__main__":
     qpos_list = list(amass_db.items())
     np.random.seed(0)
     np.random.shuffle(qpos_list)
-    smpl_parser_n = SMPL_Parser(model_path="data/smpl", gender="neutral", use_pca=False, create_transl=False)
-    smpl_parser_m = SMPL_Parser(model_path="data/smpl", gender="male", use_pca=False, create_transl=False)
-    smpl_parser_f = SMPL_Parser(model_path="data/smpl", gender="female", use_pca=False, create_transl=False)
+    smpl_parser_n = SMPL_Parser(model_path="phc/data/smpl", gender="neutral", use_pca=False, create_transl=False)
+    smpl_parser_m = SMPL_Parser(model_path="phc/data/smpl", gender="male", use_pca=False, create_transl=False)
+    smpl_parser_f = SMPL_Parser(model_path="phc/data/smpl", gender="female", use_pca=False, create_transl=False)
 
     # import ipdb; ipdb.set_trace()
     amass_seq_data = process_qpos_list(qpos_list)
      
-
+    
     train_data = {}
     test_data = {}
     valid_data = {}

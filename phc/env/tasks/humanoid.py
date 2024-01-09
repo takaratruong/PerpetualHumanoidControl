@@ -109,7 +109,8 @@ class Humanoid(BaseTask):
 
 
         super().__init__(cfg=self.cfg)
-
+        # print('humanoid init done') #Takara
+        
         self.dt = self.control_freq_inv * sim_params.dt
         self._setup_tensors()
         self.self_obs_buf = torch.zeros((self.num_envs, self.get_self_obs_size()), device=self.device, dtype=torch.float)
@@ -182,14 +183,13 @@ class Humanoid(BaseTask):
         self.gym.refresh_actor_root_state_tensor(self.sim)
         self.gym.refresh_rigid_body_state_tensor(self.sim)
         self.gym.refresh_net_contact_force_tensor(self.sim)
-
         self._root_states = gymtorch.wrap_tensor(actor_root_state)
         num_actors = self.get_num_actors_per_env()
 
         self._humanoid_root_states = self._root_states.view(self.num_envs, num_actors, actor_root_state.shape[-1])[..., 0, :]
         self._initial_humanoid_root_states = self._humanoid_root_states.clone()
         self._initial_humanoid_root_states[:, 7:13] = 0
-
+    
         self._humanoid_actor_ids = num_actors * torch.arange(self.num_envs, device=self.device, dtype=torch.int32)
 
         # create some wrapper tensors for different slices
@@ -499,7 +499,7 @@ class Humanoid(BaseTask):
             return self._num_self_obs 
         elif self.self_obs_v == 2:
             return self._num_self_obs * (self.past_track_steps + 1)
-
+        
     def get_action_size(self):
         return self._num_actions
 
@@ -584,11 +584,14 @@ class Humanoid(BaseTask):
 
     def _reset_env_tensors(self, env_ids):
         env_ids_int32 = self._humanoid_actor_ids[env_ids]
+        # TAKARA      
+        # import ipdb; ipdb.set_trace()
+        
 
         self.gym.set_actor_root_state_tensor_indexed(self.sim, gymtorch.unwrap_tensor(self._root_states), gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
         self.gym.set_dof_state_tensor_indexed(self.sim, gymtorch.unwrap_tensor(self._dof_state), gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
-        
-        
+
+
         # print("#################### refreshing ####################")
         # print("rb", (self._rigid_body_state_reshaped[None, :] - self._rigid_body_state_reshaped[:, None]).abs().sum())
         # print("contact", (self._contact_forces[None, :] - self._contact_forces[:, None]).abs().sum())
@@ -1169,7 +1172,7 @@ class Humanoid(BaseTask):
         return obs
 
     def _reset_actors(self, env_ids):
-        self._humanoid_root_states[env_ids] = self._initial_humanoid_root_states[env_ids]
+        self._humanoid_root_states[env_ids] = self._initial_humanoid_root_states[env_ids] 
         self._dof_pos[env_ids] = self._initial_dof_pos[env_ids]
         self._dof_vel[env_ids] = self._initial_dof_vel[env_ids]
         return
@@ -1181,7 +1184,7 @@ class Humanoid(BaseTask):
         self.actions = actions.to(self.device).clone()
         if len(self.actions.shape) == 1:
             self.actions = self.actions[None, ]
-            
+        # import ipdb; ipdb.set_trace()   
         if (self._pd_control):
             if self.smpl_humanoid:
                 if self.reduce_action:
@@ -1229,11 +1232,10 @@ class Humanoid(BaseTask):
         # This is after stepping, so progress buffer got + 1. Compute reset/reward do not need to forward 1 timestep since they are for "this" frame now.
         if not self.paused:
             self.progress_buf += 1
-            
         
         if self.self_obs_v == 2:
             self._update_tensor_history()
-            
+        # import ipdb;ipdb.set_trace()
         self._refresh_sim_tensors()
         self._compute_reward(self.actions)  # ZL swapped order of reward & objecation computes. should be fine.
         self._compute_reset() 
@@ -1486,7 +1488,6 @@ def compute_humanoid_reward(obs_buf):
 def compute_humanoid_reset(reset_buf, progress_buf, contact_buf, contact_body_ids, rigid_body_pos, max_episode_length, enable_early_termination, termination_heights):
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, float, bool, Tensor) -> Tuple[Tensor, Tensor]
     terminated = torch.zeros_like(reset_buf)
-
     if (enable_early_termination):
         masked_contact_buf = contact_buf.clone()
         masked_contact_buf[:, contact_body_ids, :] = 0

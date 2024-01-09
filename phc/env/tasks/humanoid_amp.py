@@ -105,16 +105,21 @@ class HumanoidAMP(Humanoid):
 
         self._motion_start_times = torch.zeros(self.num_envs).to(self.device)
         self._sampled_motion_ids = torch.zeros(self.num_envs).long().to(self.device)
+        # print("motion_file")
+        # print('-'*50)
         motion_file = cfg['env']['motion_file']
-        self._load_motion(motion_file)
 
+        self._load_motion(motion_file) # call to humanoid_im.py line 283 load_motions 
+        
+        # import ipdb
+        # ipdb.set_trace()
         self._amp_obs_buf = torch.zeros((self.num_envs, self._num_amp_obs_steps, self._num_amp_obs_per_step), device=self.device, dtype=torch.float)
         self._curr_amp_obs_buf = self._amp_obs_buf[:, 0]
         self._hist_amp_obs_buf = self._amp_obs_buf[:, 1:]
 
         self._amp_obs_demo_buf = None
 
-        data_dir = "data/smpl"
+        data_dir = "phc/data/smpl"
         self.smpl_parser_n = SMPL_Parser(model_path=data_dir, gender="neutral").to(self.device)
         self.smpl_parser_m = SMPL_Parser(model_path=data_dir, gender="male").to(self.device)
         self.smpl_parser_f = SMPL_Parser(model_path=data_dir, gender="female").to(self.device)
@@ -172,20 +177,21 @@ class HumanoidAMP(Humanoid):
     def pre_physics_step(self, actions):
         if (HACK_MOTION_SYNC or HACK_CONSISTENCY_TEST):
             actions *= 0
-
+        # print("pre_physics_step")
+        # print(actions.shape)
+        # print(actions)
         super().pre_physics_step(actions)
         return
     
     def get_task_obs_size_detail(self):
         task_obs_detail = OrderedDict()
 
-
+    
         return task_obs_detail
 
     def post_physics_step(self):
         super().post_physics_step()
 
-       
         if (HACK_MOTION_SYNC):
             self._hack_motion_sync()
 
@@ -292,7 +298,7 @@ class HumanoidAMP(Humanoid):
                 self._num_amp_obs_per_step = 13 + self._dof_obs_size + len(self._dof_names) * 3 + 3 * num_key_bodies  # [root_h, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos]
             else:
                 self._num_amp_obs_per_step = 13 + self._dof_obs_size + len(self._dof_names) * 3 + 6 * num_key_bodies  # [root_h, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, key_body_vel]
-
+            
             if not self._amp_root_height_obs:
                 self._num_amp_obs_per_step -= 1
 
@@ -311,15 +317,24 @@ class HumanoidAMP(Humanoid):
             self._num_self_obs += self._num_amp_obs_steps * self._num_amp_obs_per_step
         return
 
-    def _load_motion(self, motion_file):
-        assert (self._dof_offsets[-1] == self.num_dof)
-        if self.smpl_humanoid:
-            self._motion_lib = MotionLibSMPL(motion_file=motion_file, device=self.device, masterfoot_conifg=self._masterfoot_config)
-            self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=self.humanoid_shapes.cpu(), limb_weights=self.humanoid_limb_and_weights.cpu(), random_sample=not HACK_MOTION_SYNC)
-        else:
-            self._motion_lib = MotionLib(motion_file=motion_file, dof_body_ids=self._dof_body_ids, dof_offsets=self._dof_offsets, key_body_ids=self._key_body_ids.cpu().numpy(), device=self.device)
+    # def _load_motion(self, motion_file):
+    #     import ipdb
+    #     ipdb.set_trace()
+    #     print('-'*50)
+    #     print('Loading motion file: ', motion_file)
+    #     print('-'*50)
 
-        return
+    #     assert (self._dof_offsets[-1] == self.num_dof)
+    #     if self.smpl_humanoid:
+    #         self._motion_lib = MotionLibSMPL(motion_file=motion_file, device=self.device, masterfoot_conifg=self._masterfoot_config)
+    #         self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=self.humanoid_shapes.cpu(), limb_weights=self.humanoid_limb_and_weights.cpu(), random_sample=not HACK_MOTION_SYNC)
+    #         # print("Loaded SMPL motions")
+    #     else:
+    #         # print("Not SMPL motions")
+
+    #         self._motion_lib = MotionLib(motion_file=motion_file, dof_body_ids=self._dof_body_ids, dof_offsets=self._dof_offsets, key_body_ids=self._key_body_ids.cpu().numpy(), device=self.device)
+
+    #     return
 
     def _reset_envs(self, env_ids):
         self._reset_default_env_ids = []
@@ -425,6 +440,8 @@ class HumanoidAMP(Humanoid):
         
         num_envs = env_ids.shape[0]
         motion_ids = self._motion_lib.sample_motions(num_envs)
+        
+        # print('_sample_ref_state', motion_ids) # TAKARA 
 
         if (self._state_init == HumanoidAMP.StateInit.Random or self._state_init == HumanoidAMP.StateInit.Hybrid):
             motion_times = self._sample_time(motion_ids)

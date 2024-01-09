@@ -82,7 +82,7 @@ all_sequences = [
     "TotalCapture",
     "Transitions_mocap",
     "BMLhandball",
-    "DanceDB"
+    # "DanceDB"
 ]
 
 def read_data(folder, sequences):
@@ -165,12 +165,12 @@ def read_seq_data(folder, nsubjects, fps):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--dir", type=str, help="dataset directory", default="data/amass"
+        "--dir", type=str, help="dataset directory", default="phc/data/amass"
     )
     parser.add_argument(
         "--out_dir", type=str, help="dataset directory", default="out"
     )
-
+    print('start')
     args = parser.parse_args()
     out_path = Path(args.out_dir)
     out_path.mkdir(exist_ok=True)

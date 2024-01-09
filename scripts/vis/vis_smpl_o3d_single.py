@@ -137,7 +137,7 @@ def main():
             smpl_parser = smpl_parser_m
         else:
             smpl_parser = smpl_parser_f
-
+        
         pose_quat, trans = data_seq['body_quat'].numpy()[::2], data_seq['trans'].numpy()[::2]
         skeleton_tree = SkeletonTree.from_dict(data_seq['skeleton_tree'])
         offset = skeleton_tree.local_translation[0]

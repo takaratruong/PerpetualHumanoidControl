@@ -163,7 +163,7 @@ def exp_map_to_angle_axis(exp_map):
     axis = torch.where(mask_expand, axis, default_axis)
 
     return angle, axis
-
+    
 
 @torch.jit.script
 def exp_map_to_quat(exp_map):
@@ -221,7 +221,7 @@ def calc_heading_quat(q):
     heading = calc_heading(q)
     axis = torch.zeros_like(q[..., 0:3])
     axis[..., 2] = 1
-
+    
     heading_q = quat_from_angle_axis(heading, axis)
     return heading_q
 

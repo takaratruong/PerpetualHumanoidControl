@@ -31,6 +31,7 @@ import os
 import sys
 import pdb
 import os.path as osp
+import ipdb 
 
 sys.path.append(os.getcwd())
 
@@ -59,6 +60,7 @@ from learning import amp_network_builder
 from learning import amp_network_mcp_builder
 from learning import amp_network_pnn_builder
 
+# torch.multiprocessing.set_sharing_strategy('file_system') #Takara 
 
 from env.tasks import humanoid_amp_task
 
@@ -147,8 +149,10 @@ class RLGPUEnv(vecenv.IVecEnv):
 
     def step(self, action):
         next_obs, reward, is_done, info = self.env.step(action)
-
+        # import ipdb; ipdb.set_trace() # TAKARA
+        print('action', action)
         # todo: improve, return only dictinary
+        # return None
         self.full_state["obs"] = next_obs
         if self.use_global_obs:
             self.full_state["states"] = self.env.get_state()
@@ -196,7 +200,7 @@ env_configurations.register('rlgpu', {'env_creator': lambda **kwargs: create_rlg
 def build_alg_runner(algo_observer):
     runner = Runner(algo_observer)
     runner.player_factory.register_builder('amp_discrete', lambda **kwargs: amp_players.AMPPlayerDiscrete(**kwargs))
-    
+
     runner.algo_factory.register_builder('amp', lambda **kwargs: amp_agent.AMPAgent(**kwargs))
     runner.player_factory.register_builder('amp', lambda **kwargs: amp_players.AMPPlayerContinuous(**kwargs))
 
@@ -206,6 +210,8 @@ def build_alg_runner(algo_observer):
     runner.model_builder.network_factory.register_builder('amp_pnn', lambda **kwargs: amp_network_pnn_builder.AMPPNNBuilder())
     
     runner.algo_factory.register_builder('im_amp', lambda **kwargs: im_amp.IMAmpAgent(**kwargs))
+    
+    # ipdb.set_trace() # TAKARA    
     runner.player_factory.register_builder('im_amp', lambda **kwargs: im_amp_players.IMAMPPlayerContinuous(**kwargs))
     
     return runner
@@ -280,16 +286,17 @@ def main():
 
     os.makedirs(args.network_path, exist_ok=True)
     os.makedirs(args.log_path, exist_ok=True)
-
+    
     vargs = vars(args)
-
+    
     algo_observer = RLGPUAlgoObserver()
-
+    # import ipdb; ipdb.set_trace() # TAKARA
+    
     runner = build_alg_runner(algo_observer)
     runner.load(cfg_train)
     runner.reset()
     runner.run(vargs)
-
+    
     return
 
 

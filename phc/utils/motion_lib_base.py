@@ -178,7 +178,22 @@ class MotionLibBase():
     def fix_trans_height(pose_aa, trans, curr_gender_betas, mesh_parsers, fix_height_mode):
         raise NotImplementedError
 
+
+
     def load_motions(self, skeleton_trees, gender_betas, limb_weights, random_sample=True, start_idx=0, max_len=-1):
+        def create_duplicated_list(n, num_duplicates, limit, start_idx, device):
+            # Calculate the number of unique values needed
+            num_unique_values = (n + num_duplicates - 1) // num_duplicates
+
+            # Create a tensor of indices with each number repeated 'num_duplicates' times
+            indices = torch.arange(start_idx, start_idx + num_unique_values).repeat_interleave(num_duplicates)
+
+            # Apply the modulo operation to ensure values are within the limit
+            sample_idxes = torch.remainder(indices, limit).to(device)
+
+            # Truncate the tensor to the desired length
+            return sample_idxes[:n]
+
         # load motion load the same number of motions as there are skeletons (humanoids)
         if "gts" in self.__dict__:
             del self.gts, self.grs, self.lrs, self.grvs, self.gravs, self.gavs, self.gvs, self.dvs,
@@ -203,26 +218,75 @@ class MotionLibBase():
         total_len = 0.0
         self.num_joints = len(skeleton_trees[0].node_names)
         num_motion_to_load = len(skeleton_trees)
+        # TAKARA    
+        # random_sample = True
+        # start_idx = 20
+        # if random_sample:
+        #     sample_idxes = torch.multinomial(self._sampling_prob, num_samples=num_motion_to_load, replacement=True).to(self._device)
+        # else:           
+        #     sample_idxes = torch.remainder(torch.arange(len(skeleton_trees)) + start_idx, self._num_unique_motions ).to(self._device)
 
-        if random_sample:
-            sample_idxes = torch.multinomial(self._sampling_prob, num_samples=num_motion_to_load, replacement=True).to(self._device)
-        else:
-            sample_idxes = torch.remainder(torch.arange(len(skeleton_trees)) + start_idx, self._num_unique_motions ).to(self._device)
-
+        # sample_idxes = torch.remainder(torch.arange(len(skeleton_trees)) + 0, 1).to(self._device) # create sample idx for one motion
         # import ipdb; ipdb.set_trace()
+
+        ### SAMPLE RANDOM KEYS
+        # start_idx = 1 #1300 #1300 #5000
+        # assert start_idx <= self._num_unique_motions, 'start_idx must be less than the number of unique motions'
+        # num_duplicates = 5
+        # sample_idxes = create_duplicated_list(n=len(skeleton_trees) , num_duplicates=num_duplicates, limit=int(self._num_unique_motions), start_idx=start_idx, device=self._device)
+        # import ipdb; ipdb.set_trace()
+
+        # SAMPLE BASED ON NAME
+        # name2idx = {name: idx for idx, name in enumerate(self._motion_data_keys)}
+        # names = ['0-KIT_8_WalkingStraightForwards03_poses' , '0-KIT_4_WalkingStraightBackwards04_poses','0-KIT_9_WalkInClockwiseCircle05_poses', '0-KIT_10_WalkInCounterClockwiseCircle06_poses']
+
+        # sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
+        # sample_idxes = torch.sort(sample_idxes).values
+        # sample_idxes = sample_idxes.repeat_interleave(10)
+        # sample_idxes= sample_idxes[:len(skeleton_trees)]
+
+        # SAMPLE BASED ON FILE NAMES: 
+
+        all_names = np.load('walking_motion_names.npy')
+        name2idx ={}
+        for name in all_names: 
+            # print(name)
+            # import ipdb; ipdb.set_trace()
+            if len(np.where(self._motion_data_keys == '0-'+name)[0]) != 0:
+                name2idx[name] = np.where(self._motion_data_keys == '0-'+name)[0][0]
+            else:
+                # print(f"Motion {name} not found in motion data keys in motion_lib_base.py")
+                pass
+        # # import ipdb; ipdb.set_trace()   
+        np.random.seed(0)
+        start_idx = 0
+        num_motions = 100
+        num_duplicates = 1  
+        sample_idxes = list(name2idx.values())[start_idx:]
+        np.random.shuffle(sample_idxes)
+        sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
+        # import ipdb; ipdb.set_trace()
+        sample_idxes = torch.sort(sample_idxes).values
+        sample_idxes =sample_idxes.repeat_interleave(num_duplicates)
+        sample_idxes =sample_idxes[:len(skeleton_trees)]
+        
+        #######################################################################################3
+        
         self._curr_motion_ids = sample_idxes
         self.one_hot_motions = torch.nn.functional.one_hot(self._curr_motion_ids, num_classes = self._num_unique_motions).to(self._device)  # Testing for obs_v5
         self.curr_motion_keys = self._motion_data_keys[sample_idxes]
         self._sampling_batch_prob = self._sampling_prob[self._curr_motion_ids] / self._sampling_prob[self._curr_motion_ids].sum()
 
-        print("\n****************************** Current motion keys ******************************")
-        print("Sampling motion:", sample_idxes[:30])
-        if len(self.curr_motion_keys) < 100:
-            print(self.curr_motion_keys)
-        else:
-            print(self.curr_motion_keys[:30], ".....")
-        print("*********************************************************************************\n")
 
+        print("\n****************************** Current motion keys ******************************")
+        
+        # print("Sampling motion:", sample_idxes[:50])
+        print(self.curr_motion_keys)
+        # if len(self.curr_motion_keys) < 100:
+        #     print(self.curr_motion_keys)
+        # else:       
+        #     print(self.curr_motion_keys[:50], ".....")
+        print("*********************************************************************************\n")
 
         motion_data_list = self._motion_data_list[sample_idxes.cpu().numpy()]
         mp.set_sharing_strategy('file_descriptor')
@@ -438,6 +502,7 @@ class MotionLibBase():
         num_bodies = self._get_num_bodies()
 
         motion_len = self._motion_lengths[motion_ids]
+        # import ipdb; ipdb.set_trace()
         num_frames = self._motion_num_frames[motion_ids]
         dt = self._motion_dt[motion_ids]
 

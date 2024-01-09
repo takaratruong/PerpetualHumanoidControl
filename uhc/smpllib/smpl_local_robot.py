@@ -1182,7 +1182,10 @@ class Body:
 
 
 class SMPL_Robot:
-    def __init__(self, cfg, data_dir="data/smpl"):
+    def __init__(self, cfg, data_dir="phc/data/smpl"):
+        """TAKARA FIXED"""
+        data_dir="phc/data/smpl"
+
         self.bodies = []
         self.weight = 0
         self.height = 0
@@ -1213,6 +1216,9 @@ class SMPL_Robot:
         self.beta = (torch.zeros(
             (1, 10)).float() if self.smpl_model == "smpl" else torch.zeros(
                 (1, 16)).float())
+        
+
+        # print(data_dir)
 
         if self.smpl_model == "smpl":
             self.smpl_parser_n = SMPL_Parser(model_path=data_dir,
