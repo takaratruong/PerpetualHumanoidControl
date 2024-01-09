@@ -280,9 +280,9 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         obs_store = np.zeros((self.env.num_envs, max_steps, 312)) # 325 bad diff, 360 , OBS_size fixed, # if env=1, then obs is not colelcted 
         act_store = np.zeros((self.env.num_envs, max_steps, 69)) 
         done_envs = np.zeros(self.env.num_envs,dtype=bool)
-
-        # self.mode = 'collect'   
-        self.mode = 'diff'   
+        
+        self.mode = 'collect'   
+        # self.mode = 'diff'   
         
         # import ipdb; ipdb.set_trace() # Takara
         
