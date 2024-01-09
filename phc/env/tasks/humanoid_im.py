@@ -1757,9 +1757,9 @@ def compute_humanoid_traj_reset(reset_buf, progress_buf, contact_buf, contact_bo
         fall_height = body_height < termination_heights
         fall_height[:, contact_body_ids] = False
         fall_height = torch.any(fall_height, dim=-1)
-        
-        has_failed = torch.logical_and(has_contacted_fall, fall_height)
 
+        has_failed = torch.logical_and(has_contacted_fall, fall_height)
+        
         if disableCollision:
             has_failed[:] = False
 

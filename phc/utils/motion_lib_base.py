@@ -259,9 +259,9 @@ class MotionLibBase():
                 pass
         # # import ipdb; ipdb.set_trace()   
         np.random.seed(0)
-        start_idx = 0
-        num_motions = 100
-        num_duplicates = 1  
+        start_idx = 50
+        num_motions = 50
+        num_duplicates = 2
         sample_idxes = list(name2idx.values())[start_idx:]
         np.random.shuffle(sample_idxes)
         sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
@@ -271,12 +271,11 @@ class MotionLibBase():
         sample_idxes =sample_idxes[:len(skeleton_trees)]
         
         #######################################################################################3
-        
+
         self._curr_motion_ids = sample_idxes
         self.one_hot_motions = torch.nn.functional.one_hot(self._curr_motion_ids, num_classes = self._num_unique_motions).to(self._device)  # Testing for obs_v5
         self.curr_motion_keys = self._motion_data_keys[sample_idxes]
         self._sampling_batch_prob = self._sampling_prob[self._curr_motion_ids] / self._sampling_prob[self._curr_motion_ids].sum()
-
 
         print("\n****************************** Current motion keys ******************************")
         
