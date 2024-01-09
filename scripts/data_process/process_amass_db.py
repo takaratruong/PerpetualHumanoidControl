@@ -264,7 +264,6 @@ if __name__ == "__main__":
     smpl_parser_m = SMPL_Parser(model_path="phc/data/smpl", gender="male", use_pca=False, create_transl=False)
     smpl_parser_f = SMPL_Parser(model_path="phc/data/smpl", gender="female", use_pca=False, create_transl=False)
 
-    # import ipdb; ipdb.set_trace()
     amass_seq_data = process_qpos_list(qpos_list)
      
     
@@ -287,8 +286,6 @@ if __name__ == "__main__":
         if not found:
             print(f"Not found!! {start_name}")
 
-    import ipdb
-    ipdb.set_trace()
     joblib.dump(train_data, f"sample_data/amass_{take_num}_train.pkl")
     joblib.dump(test_data, f"sample_data/amass_{take_num}_test.pkl")
     joblib.dump(valid_data, f"sample_data/amass_{take_num}_valid.pkl")

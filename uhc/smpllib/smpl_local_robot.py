@@ -2426,7 +2426,7 @@ if __name__ == "__main__":
         "replace_feet": True,
         "masterfoot": False,
         "big_ankle": True,
-        "freeze_hand": True, 
+        "freeze_hand": True,
         "box_body": False,
         "master_range": 50,
         "model": "smpl",
@@ -2451,6 +2451,7 @@ if __name__ == "__main__":
     smpl_robot.write_xml(f"phc/data/assets/mjcf/smpl_humanoid.xml")
     m = mujoco.MjModel.from_xml_path(f"phc/data/assets/mjcf/smpl_humanoid.xml")
     d = mujoco.MjData(m)
+    d.qpos[2] = 0.95
     # model = load_model_from_path(f"phc/data/assets/mjcf/amp_humanoid.xml")
 
     with mujoco.viewer.launch_passive(m, d) as viewer:
