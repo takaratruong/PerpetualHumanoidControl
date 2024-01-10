@@ -5,6 +5,7 @@ import glob
 import os
 import sys
 import pdb
+import random
 import os.path as osp
 sys.path.append(os.getcwd())
 
@@ -50,7 +51,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         self.pred_pos, self.pred_pos_all = [], []
         self.curr_stpes = 0
 
-        self.mode = None 
+        # Michael ==
+        self.mode = config['mode'] # Set mode ('collect' or 'diff' from command line)
+        self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
+        self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
+        self.walking_names = np.load('walking_motion_names.npy') # file names for all walking motions
+        # ==
 
         if COLLECT_Z:
             self.zs, self.zs_all = [], []
@@ -247,7 +253,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             return z
 
     def run(self): 
-        # print('-'*50)
+        print('-'*50)
         # print(self.env)
 
         n_games = self.games_num
@@ -280,9 +286,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         obs_store = np.zeros((self.env.num_envs, max_steps, 312)) # 325 bad diff, 360 , OBS_size fixed, # if env=1, then obs is not colelcted 
         act_store = np.zeros((self.env.num_envs, max_steps, 69)) 
         done_envs = np.zeros(self.env.num_envs,dtype=bool)
-        
-        self.mode = 'collect'   
-        # self.mode = 'diff'   
+    
         
         # import ipdb; ipdb.set_trace() # Takara
         
@@ -326,23 +330,26 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             policy.to('cuda')
             policy.eval()
         
-        # text = 'a person walks straight forward, before stopping.'
-        # text = 'person is walking backwards at medium pace'
-        text = 'a person walks straight backwards'
-        # text = 'a person walks in a circle clockwise.'
-        # text = 'a person walks in a counter clockwise circle.'
-        # text = 'a person plays the violin.'   
-        
-        # import ipdb; ipdb.set_trace() # Takara
+
+        # NOTE: Replacing text code here with a text sampling function that happens at each episode (below) - Michael
+        # # text = 'a person walks straight forward, before stopping.'
+        # # text = 'person is walking backwards at medium pace'
+        # text = 'a person walks straight backwards'
+        # # text = 'a person walks in a circle clockwise.'
+        # # text = 'a person walks in a counter clockwise circle.'
+        # # text = 'a person plays the violin.'
+
         clip_model = load_and_freeze_clip(device='cuda')
-        text_embed = encode_text(text, clip_model)
 
         ###########################################################################
 
         obs_collect = None
         act_collect = None
         j = 0 
-        # MAIN LOOP TAKARA 
+        # MAIN LOOP TAKARA
+        print(f'Num envs: {self.env.num_envs}')
+        print(f'Is deterministic: {is_determenistic}')
+
         for t in range(n_games):
             if games_played >= n_games:
                 break
@@ -353,6 +360,15 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 # obs_deque = collections.deque([self.env.task.diff_obs] * cfg['policy']['obs_horizon'], maxlen=cfg['policy']['obs_horizon'])
                 obs_deque = collections.deque([self.env.task.diff_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 # obs_deque = collections.deque([self.env.task.diff_obs] * 1, maxlen=1)
+            
+
+            # Sample a text goal - Michael
+            if self.mode == 'diff':
+                text_embeds, sampled_texts = sample_text_embeds(
+                    self.env.num_envs,
+                    self.m2t_map, self.walking_names, clip_model
+                )
+                print(f'Sampled texts: {sampled_texts}')
 
             batch_size = 1
             batch_size = self.get_batch_size(obs_dict["obs"], batch_size)
@@ -405,7 +421,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         # action = action_dict['action'][0][0] # first env, first action,  
                         # action = torch.tensor(action.reshape(1, -1)).float().to('cuda')
                         # import ipdb; ipdb.set_trace() # Takara
-                        action_dict = policy.predict_action( {'obs':torch.tensor(np.stack(list(obs_deque),1))}, text_embed.repeat(self.env.num_envs,1))
+
+                        action_dict = policy.predict_action(
+                            {'obs': torch.tensor(np.stack(list(obs_deque), 1))},
+                            torch.as_tensor(text_embeds, device=self.device)
+                        )
+
                         # if self.env.num_envs>1:    
                         # action = action_dict['action'][:,0,:]
                         action = action_dict['action_pred'][:,0,:] # if horizon =1 then use action_pred
@@ -543,17 +564,43 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         return
 
+
+def clean_raw_text(raw_text):
+    all_annotations = raw_text.split('\n')
+    if '' in all_annotations:
+        all_annotations.remove('')
+
+    annot = random.choice(all_annotations)
+    english = annot.split('#')[0]
+    return english
+
+
+def sample_text_embeds(num_samples, m2t_map, walking_names, clip_model):
+    text_embeds = []
+    texts = []
+    for _ in range(num_samples):
+        motion_file = random.choice(walking_names)
+        raw_text = m2t_map[motion_file]
+        text = clean_raw_text(raw_text)
+        text_embed = encode_text(text, clip_model)
+        text_embeds.append(text_embed)
+        texts.append(text)
+
+    text_embeds = np.vstack(text_embeds) 
+    return text_embeds, texts
+
+
 def load_and_freeze_clip(clip_version='ViT-B/32', device='cuda'):
-        clip_model, clip_preprocess = clip.load(clip_version, device=device)
-        if str(device) != 'cpu':
-            clip.model.convert_weights(clip_model)
+    clip_model, clip_preprocess = clip.load(clip_version, device=device)
+    if str(device) != 'cpu':
+        clip.model.convert_weights(clip_model)
 
-        # Freeze CLIP weights
-        clip_model.eval()
-        for p in clip_model.parameters():
-            p.requires_grad = False
+    # Freeze CLIP weights
+    clip_model.eval()
+    for p in clip_model.parameters():
+        p.requires_grad = False
 
-        return clip_model
+    return clip_model
 
 def encode_text(text, model):
     tokens = clip.tokenize(text).to('cuda')
