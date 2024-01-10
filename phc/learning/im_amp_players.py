@@ -55,7 +55,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         self.mode = config['mode'] # Set mode ('collect' or 'diff' from command line)
         self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
         self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
-        self.walking_names = np.load('walking_motion_names.npy') # file names for all walking motions
         # ==
 
         if COLLECT_Z:
@@ -83,7 +82,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
     def _post_step(self, info, done):
         super()._post_step(info)
-        
 
         if flags.im_eval:
 
@@ -96,7 +94,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
             # self._motion_lib = humanoid_env._motion_lib
      
-            max_steps = 300
+            max_steps = 150
 
             self.terminate_state = torch.logical_or(termination_state, self.terminate_state)
             if (~self.terminate_state).sum() > 0:
@@ -162,6 +160,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 num_evals = 30
                 if (humanoid_env.start_idx + humanoid_env.num_envs >= num_evals):
                     print('FINAL SUCCESS RATE', self.success_rate)
+                    print(f'Failed texts: {self.failed_texts}')
                     exit() 
                     # import ipdb; ipdb.set_trace()
                     # terminate_hist = np.concatenate(self.terminate_memory)
@@ -231,10 +230,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             self.pbar.set_description(update_str)
         # import ipdb; ipdb.set_trace() # Takara
         
-        if self.mode == 'diff': 
-            done = torch.tensor([int(self.curr_stpes > self.max_steps)])
-        
-        return done 
+        return done
     
 
     def get_z(self, obs_dict):
@@ -331,13 +327,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             policy.eval()
         
 
-        # NOTE: Replacing text code here with a text sampling function that happens at each episode (below) - Michael
-        # # text = 'a person walks straight forward, before stopping.'
-        # # text = 'person is walking backwards at medium pace'
-        # text = 'a person walks straight backwards'
-        # # text = 'a person walks in a circle clockwise.'
-        # # text = 'a person walks in a counter clockwise circle.'
-        # # text = 'a person plays the violin.'
+        # NOTE: Keep hardcoded_text None to sample random texts from the m2t_map.
+        # Set hardcoded_text to a string value if you want to manually specficy a text.
+        hardcoded_text = None
+        #hardcoded_text = 'a person walks in a clockwise quarter circle.'
 
         clip_model = load_and_freeze_clip(device='cuda')
 
@@ -364,11 +357,17 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
             # Sample a text goal - Michael
             if self.mode == 'diff':
-                text_embeds, sampled_texts = sample_text_embeds(
-                    self.env.num_envs,
-                    self.m2t_map, self.walking_names, clip_model
-                )
-                print(f'Sampled texts: {sampled_texts}')
+                sampled_texts = None
+                if hardcoded_text is None:
+                    text_embeds, sampled_texts = sample_text_embeds(
+                        self.env.num_envs,
+                        self.m2t_map, clip_model
+                    )
+                    print(f'Sampled texts: {sampled_texts}')
+                else:
+                    text_embed = encode_text(hardcoded_text, clip_model)
+                    text_embeds = text_embed.repeat(self.env.num_envs, 1)
+                    print(f'Hardcoded text: {hardcoded_text}')
 
             batch_size = 1
             batch_size = self.get_batch_size(obs_dict["obs"], batch_size)
@@ -384,7 +383,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
             done_indices=[]
             ep_end_collect = [] 
-
+            
+            self.failed_texts = set()
             with torch.no_grad():       
 
                 for n in range(self.max_steps): # TAKARA EDIT 
@@ -441,8 +441,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     #     act = torch.tensor(act.reshape(1, -1)).float().to('cuda')
                     #     obs_deque.append(self.env.task.diff_obs)
                     #     obs_dict, r, done, info = self.env_step(self.env, action)
-                        
+                    
+    
                     obs_dict, r, done, info = self.env_step(self.env, action)
+
                     # import ipdb; ipdb.set_trace() # Takara
                     
                     # Collect Action here. The env_step goes from the heirarchical action to the actual torque, which we capture.  
@@ -457,12 +459,23 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     cr += r
                     steps += 1
 
+                    # Record failed language prompts
+                    if self.mode == 'diff' and self.terminate_state.sum() > 0:
+                        if sampled_texts is not None:
+                            terminated_idxs = torch.argwhere(self.terminate_state).squeeze().tolist()
+                            if not isinstance(terminated_idxs, np.ndarray):
+                                terminated_idxs = [terminated_idxs]
+                            failed = sampled_texts[terminated_idxs]
+                            for fail in failed:
+                                self.failed_texts.add(fail)
+                            
+
                     if COLLECT_Z: info['z'] = z
                     done = self._post_step(info, done.clone())
 
                     if render:
                         self.env.render(mode="human")
-                        time.sleep(self.render_sleep*2)
+                        #time.sleep(self.render_sleep*2) # Does commenting this out make rendering faster? - Michael
                     
 
                     # all_done_indices = torch.logical_and(done,~termination_state).nonzero(as_tuple=False)
@@ -575,11 +588,11 @@ def clean_raw_text(raw_text):
     return english
 
 
-def sample_text_embeds(num_samples, m2t_map, walking_names, clip_model):
+def sample_text_embeds(num_samples, m2t_map, clip_model):
     text_embeds = []
     texts = []
     for _ in range(num_samples):
-        motion_file = random.choice(walking_names)
+        motion_file = random.choice(list(m2t_map.keys()))
         raw_text = m2t_map[motion_file]
         text = clean_raw_text(raw_text)
         text_embed = encode_text(text, clip_model)
@@ -587,6 +600,7 @@ def sample_text_embeds(num_samples, m2t_map, walking_names, clip_model):
         texts.append(text)
 
     text_embeds = np.vstack(text_embeds) 
+    texts = np.array(texts)
     return text_embeds, texts
 
 
