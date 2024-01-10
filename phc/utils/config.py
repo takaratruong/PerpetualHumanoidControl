@@ -446,6 +446,19 @@ def get_args(benchmark=False):
             "default": False,
             "help": "No SMPL_robot dependency"
         },
+        {
+            "name": "--m2t_map_path",
+            "default": None,
+            "type": str
+        },
+        {
+            "name": "--mode",
+            "default": None,
+            "required": True,
+            "type": str,
+            "choices": ['collect', 'diff'],
+            "Help": "choose 'collect' or 'diff'"
+        },
     ]
 
     if benchmark:

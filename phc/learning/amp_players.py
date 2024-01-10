@@ -62,6 +62,8 @@ class AMPPlayerContinuous(common_player.CommonPlayer):
     #         return current_action
 
     def restore(self, fn):
+        if self.mode == 'diff':
+            return
         super().restore(fn)
         if self._normalize_amp_input:
             checkpoint = torch_ext.load_checkpoint(fn)

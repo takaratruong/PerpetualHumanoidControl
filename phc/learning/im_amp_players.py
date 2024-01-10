@@ -5,6 +5,7 @@ import glob
 import os
 import sys
 import pdb
+import random
 import os.path as osp
 sys.path.append(os.getcwd())
 
@@ -27,13 +28,13 @@ import clip
 
 
 #TAKARA
-sys.path.insert(0,'/move/u/takaraet/motion_mimic')
-from algs.diff_policy import DiffusionPolicy
+# sys.path.insert(0,'/move/u/takaraet/motion_mimic')
+# from algs.diff_policy import DiffusionPolicy
 
 # sys.path.insert(0,'/move/u/takaraet/diffusion_policy')
 # from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
-sys.path.insert(0,'/move/u/takaraet/my_diffusion_policy')
+sys.path.insert(0,'/move/u/mpiseno/src/my_diffusion_policy')
 from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
 COLLECT_Z = False
@@ -50,7 +51,11 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         self.pred_pos, self.pred_pos_all = [], []
         self.curr_stpes = 0
 
-        self.mode = None 
+        # Michael ==
+        self.mode = config['mode'] # Set mode ('collect' or 'diff' from command line)
+        self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
+        self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
+        # ==
 
         if COLLECT_Z:
             self.zs, self.zs_all = [], []
@@ -77,7 +82,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
     def _post_step(self, info, done):
         super()._post_step(info)
-        
 
         if flags.im_eval:
 
@@ -90,7 +94,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
             # self._motion_lib = humanoid_env._motion_lib
      
-            max_steps = 300
+            max_steps = 150
 
             self.terminate_state = torch.logical_or(termination_state, self.terminate_state)
             if (~self.terminate_state).sum() > 0:
@@ -156,6 +160,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 num_evals = 600
                 if (humanoid_env.start_idx + humanoid_env.num_envs >= num_evals):
                     print('FINAL SUCCESS RATE', self.success_rate)
+                    print(f'Failed texts: {self.failed_texts}')
                     exit() 
                     # import ipdb; ipdb.set_trace()
                     # terminate_hist = np.concatenate(self.terminate_memory)
@@ -225,10 +230,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             self.pbar.set_description(update_str)
         # import ipdb; ipdb.set_trace() # Takara
         
-        if self.mode == 'diff': 
-            done = torch.tensor([int(self.curr_stpes > self.max_steps)])
-        
-        return done 
+        return done
     
 
     def get_z(self, obs_dict):
@@ -247,7 +249,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             return z
 
     def run(self): 
-        # print('-'*50)
+        print('-'*50)
         # print(self.env)
 
         n_games = self.games_num
@@ -280,19 +282,17 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         obs_store = np.zeros((self.env.num_envs, max_steps, 312)) # 325 bad diff, 360 , OBS_size fixed, # if env=1, then obs is not colelcted 
         act_store = np.zeros((self.env.num_envs, max_steps, 69)) 
         done_envs = np.zeros(self.env.num_envs,dtype=bool)
-        
-        self.mode = 'collect'   
-        # self.mode = 'diff'   
+    
         
         # import ipdb; ipdb.set_trace() # Takara
         
         if self.mode == 'diff':
             
             # My Policy     
-            policy_path = "/move/u/takaraet/motion_mimic/results/diff_models/phc_diff/model_iter_800.pt" #300 turns well, 600 best so far (10 envs) 2 obs, (20 envs gets stuck) 2 obs, 15 envs get stuck 2obs, 15 envs 300 3 obs 
-            exp_state = torch.load(policy_path)     
-            cfg = exp_state['config']
-            my_model = DiffusionPolicy(exp_state=exp_state) 
+            # policy_path = "/move/u/takaraet/motion_mimic/results/diff_models/phc_diff/model_iter_800.pt" #300 turns well, 600 best so far (10 envs) 2 obs, (20 envs gets stuck) 2 obs, 15 envs get stuck 2obs, 15 envs 300 3 obs 
+            # exp_state = torch.load(policy_path)     
+            # cfg = exp_state['config']
+            # my_model = DiffusionPolicy(exp_state=exp_state) 
 
             # POLICY DIFFUSION POLICY: ###################################################
                 
@@ -336,23 +336,23 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             policy.to('cuda')
             policy.eval()
         
-        # text = 'a person walks straight forward, before stopping.'
-        # text = 'person is walking backwards at medium pace'
-        text = 'a person walks straight backwards'
-        # text = 'a person walks in a circle clockwise.'
-        # text = 'a person walks in a counter clockwise circle.'
-        # text = 'a person plays the violin.'   
-        
-        # import ipdb; ipdb.set_trace() # Takara
+
+        # NOTE: Keep hardcoded_text None to sample random texts from the m2t_map.
+        # Set hardcoded_text to a string value if you want to manually specficy a text.
+        hardcoded_text = None
+        #hardcoded_text = 'a person walks in a clockwise quarter circle.'
+
         clip_model = load_and_freeze_clip(device='cuda')
-        text_embed = encode_text(text, clip_model)
 
         ###########################################################################
 
         obs_collect = None
         act_collect = None
         j = 0 
-        # MAIN LOOP TAKARA 
+        # MAIN LOOP TAKARA
+        print(f'Num envs: {self.env.num_envs}')
+        print(f'Is deterministic: {is_determenistic}')
+
         for t in range(n_games):
             if games_played >= n_games:
                 break
@@ -363,6 +363,21 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 # obs_deque = collections.deque([self.env.task.diff_obs] * cfg['policy']['obs_horizon'], maxlen=cfg['policy']['obs_horizon'])
                 obs_deque = collections.deque([self.env.task.diff_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 # obs_deque = collections.deque([self.env.task.diff_obs] * 1, maxlen=1)
+            
+
+            # Sample a text goal - Michael
+            if self.mode == 'diff':
+                sampled_texts = None
+                if hardcoded_text is None:
+                    text_embeds, sampled_texts = sample_text_embeds(
+                        self.env.num_envs,
+                        self.m2t_map, clip_model
+                    )
+                    print(f'Sampled texts: {sampled_texts}')
+                else:
+                    text_embed = encode_text(hardcoded_text, clip_model)
+                    text_embeds = text_embed.repeat(self.env.num_envs, 1)
+                    print(f'Hardcoded text: {hardcoded_text}')
 
             batch_size = 1
             batch_size = self.get_batch_size(obs_dict["obs"], batch_size)
@@ -378,7 +393,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
             done_indices=[]
             ep_end_collect = [] 
-
+            
+            self.failed_texts = set()
             with torch.no_grad():       
 
                 for n in range(self.max_steps): # TAKARA EDIT 
@@ -415,15 +431,16 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         # action = action_dict['action'][0][0] # first env, first action,  
                         # action = torch.tensor(action.reshape(1, -1)).float().to('cuda')
                         # import ipdb; ipdb.set_trace() # Takara
-
-                        
                         clean_traj = torch.ones(self.env.num_envs)
-                        action_dict = policy.predict_action( {'obs':torch.tensor(np.stack(list(obs_deque),1))}, text_embed.repeat(self.env.num_envs,1), clean_traj)
+                        
+                        action_dict = policy.predict_action(
+                            {'obs': torch.tensor(np.stack(list(obs_deque), 1))},
+                            torch.as_tensor(text_embeds, device=self.device), clean_traj
+                        )
+
+                        # if self.env.num_envs>1:    
+                        # action = action_dict['action'][:,0,:]
                         action = action_dict['action'][:,0,:] # if horizon =1 then use action_pred
-
-                        # action_dict = policy.predict_action( {'obs':torch.tensor(np.stack(list(obs_deque),1))}, text_embed.repeat(self.env.num_envs,1))
-                        # action = action_dict['action_pred'][:,0,:] # if horizon =1 then use action_pred
-
 
                         # else: 
                         #     action = action_dict['action'][0][0] # first env, first action,  
@@ -435,8 +452,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     #     act = torch.tensor(act.reshape(1, -1)).float().to('cuda')
                     #     obs_deque.append(self.env.task.diff_obs)
                     #     obs_dict, r, done, info = self.env_step(self.env, action)
-                        
+                    
+    
                     obs_dict, r, done, info = self.env_step(self.env, action)
+
                     # import ipdb; ipdb.set_trace() # Takara
                     
                     # Collect Action here. The env_step goes from the heirarchical action to the actual torque, which we capture.  
@@ -451,12 +470,23 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     cr += r
                     steps += 1
 
+                    # Record failed language prompts
+                    if self.mode == 'diff' and self.terminate_state.sum() > 0:
+                        if sampled_texts is not None:
+                            terminated_idxs = torch.argwhere(self.terminate_state).squeeze().tolist()
+                            if not isinstance(terminated_idxs, np.ndarray):
+                                terminated_idxs = [terminated_idxs]
+                            failed = sampled_texts[terminated_idxs]
+                            for fail in failed:
+                                self.failed_texts.add(fail)
+                            
+
                     if COLLECT_Z: info['z'] = z
                     done = self._post_step(info, done.clone())
 
                     if render:
                         self.env.render(mode="human")
-                        time.sleep(self.render_sleep*2)
+                        #time.sleep(self.render_sleep*2) # Does commenting this out make rendering faster? - Michael
                     
 
                     # all_done_indices = torch.logical_and(done,~termination_state).nonzero(as_tuple=False)
@@ -558,17 +588,44 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         return
 
+
+def clean_raw_text(raw_text):
+    all_annotations = raw_text.split('\n')
+    if '' in all_annotations:
+        all_annotations.remove('')
+
+    annot = random.choice(all_annotations)
+    english = annot.split('#')[0]
+    return english
+
+
+def sample_text_embeds(num_samples, m2t_map, clip_model):
+    text_embeds = []
+    texts = []
+    for _ in range(num_samples):
+        motion_file = random.choice(list(m2t_map.keys()))
+        raw_text = m2t_map[motion_file]
+        text = clean_raw_text(raw_text)
+        text_embed = encode_text(text, clip_model)
+        text_embeds.append(text_embed)
+        texts.append(text)
+
+    text_embeds = np.vstack(text_embeds) 
+    texts = np.array(texts)
+    return text_embeds, texts
+
+
 def load_and_freeze_clip(clip_version='ViT-B/32', device='cuda'):
-        clip_model, clip_preprocess = clip.load(clip_version, device=device)
-        if str(device) != 'cpu':
-            clip.model.convert_weights(clip_model)
+    clip_model, clip_preprocess = clip.load(clip_version, device=device)
+    if str(device) != 'cpu':
+        clip.model.convert_weights(clip_model)
 
-        # Freeze CLIP weights
-        clip_model.eval()
-        for p in clip_model.parameters():
-            p.requires_grad = False
+    # Freeze CLIP weights
+    clip_model.eval()
+    for p in clip_model.parameters():
+        p.requires_grad = False
 
-        return clip_model
+    return clip_model
 
 def encode_text(text, model):
     tokens = clip.tokenize(text).to('cuda')

@@ -286,8 +286,15 @@ def main():
 
     os.makedirs(args.network_path, exist_ok=True)
     os.makedirs(args.log_path, exist_ok=True)
-    
+
     vargs = vars(args)
+
+    # Michael ==
+    cfg_train['params']['config']['mode'] = vargs['mode'] # pass command line args to runner config
+    cfg_train['params']['config']['m2t_map_path'] = vargs['m2t_map_path'] # pass command line args to runner config
+    if vargs['mode'] == 'diff':
+        assert vargs['m2t_map_path'] is not None, "For diff mode, provide m2t_map_path"
+    # === 
     
     algo_observer = RLGPUAlgoObserver()
     # import ipdb; ipdb.set_trace() # TAKARA
