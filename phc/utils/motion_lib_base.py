@@ -259,17 +259,22 @@ class MotionLibBase():
                 pass
         # # import ipdb; ipdb.set_trace()   
         np.random.seed(0)
-        start_idx = 50
-        num_motions = 50
-        num_duplicates = 2
+        start_idx = 100
+        num_motions = 100
+        num_duplicates = 0
         sample_idxes = list(name2idx.values())[start_idx:]
         np.random.shuffle(sample_idxes)
         sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
         # import ipdb; ipdb.set_trace()
         sample_idxes = torch.sort(sample_idxes).values
-        sample_idxes =sample_idxes.repeat_interleave(num_duplicates)
+        # sample_idxes =sample_idxes.repeat_interleave(num_duplicates)
         sample_idxes =sample_idxes[:len(skeleton_trees)]
         
+        seed = 1
+        random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        np.random.seed(seed)
         #######################################################################################3
 
         self._curr_motion_ids = sample_idxes
@@ -298,7 +303,7 @@ class MotionLibBase():
             num_jobs = 1
         if flags.debug:
             num_jobs = 1
-        
+
         res_acc = {}  # using dictionary ensures order of the results.
         jobs = motion_data_list
         chunk = np.ceil(len(jobs) / num_jobs).astype(int)

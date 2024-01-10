@@ -153,7 +153,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 self.pred_pos_all += all_body_pos_pred
                 self.gt_pos_all += all_body_pos_gt
 
-                num_evals = 30
+                num_evals = 600
                 if (humanoid_env.start_idx + humanoid_env.num_envs >= num_evals):
                     print('FINAL SUCCESS RATE', self.success_rate)
                     exit() 
@@ -306,10 +306,20 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.07/13.40.48_train_diffusion_transformer_nobs4/checkpoints/epoch=7900-train_action_mse_error=0.003.ckpt' # .6, .23, .8
 
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.08/19.27.59_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/latest.ckpt'
-            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.08/19.27.59_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt' #nobs 2
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.08/19.27.59_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt' #nobs 2
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.08/20.41.24_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/latest.ckpt' #nobs 1
             # checkpoint = 'nobs3'
 
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.56.58_noisy-clean/checkpoints/latest.ckpt'
+
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.12.12_noise-clean/checkpoints/epoch=7700-train_action_mse_error=0.002.ckpt'
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.28.30_noise_only_final/checkpoints/epoch=7500-train_action_mse_error=0.002.ckpt'
+            
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.54.37_clean_only/checkpoints/epoch=7700-train_action_mse_error=0.003.ckpt'
+
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/14.07.31_action_masked_nob2/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
+            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/17.42.47_noise-clean_debug_shuffle/checkpoints/epoch=7800-train_action_mse_error=0.001.ckpt'
+            
             # load checkpoint       
             payload = torch.load(open(checkpoint, 'rb'), pickle_module=dill)
 
@@ -391,7 +401,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         # if n==1137:
                         #     import ipdb; ipdb.set_trace() # Takara
                         index_store = self.env.task.progress_buf
-                        # print(index_store)
+                        # print(index_store)SS
                         if self.env.task.diff_obs.shape[0] == self.env.num_envs:
                             obs_store[~done_envs, index_store[~done_envs]-1,:] = self.env.task.diff_obs[~done_envs,:]
                             # obs_store[~done_envs, n,:] = self.env.task.diff_obs[~done_envs,:]
@@ -405,10 +415,15 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         # action = action_dict['action'][0][0] # first env, first action,  
                         # action = torch.tensor(action.reshape(1, -1)).float().to('cuda')
                         # import ipdb; ipdb.set_trace() # Takara
-                        action_dict = policy.predict_action( {'obs':torch.tensor(np.stack(list(obs_deque),1))}, text_embed.repeat(self.env.num_envs,1))
-                        # if self.env.num_envs>1:    
-                        # action = action_dict['action'][:,0,:]
-                        action = action_dict['action_pred'][:,0,:] # if horizon =1 then use action_pred
+
+                        
+                        clean_traj = torch.ones(self.env.num_envs)
+                        action_dict = policy.predict_action( {'obs':torch.tensor(np.stack(list(obs_deque),1))}, text_embed.repeat(self.env.num_envs,1), clean_traj)
+                        action = action_dict['action'][:,0,:] # if horizon =1 then use action_pred
+
+                        # action_dict = policy.predict_action( {'obs':torch.tensor(np.stack(list(obs_deque),1))}, text_embed.repeat(self.env.num_envs,1))
+                        # action = action_dict['action_pred'][:,0,:] # if horizon =1 then use action_pred
+
 
                         # else: 
                         #     action = action_dict['action'][0][0] # first env, first action,  
