@@ -459,6 +459,16 @@ def get_args(benchmark=False):
             "choices": ['collect', 'diff'],
             "Help": "choose 'collect' or 'diff'"
         },
+        {
+            "name": "--act_noise",
+            "default": 0.04,
+            "type": float
+        },
+        {
+            "name": "--collect_start_idx",
+            "default": 0,
+            "type": int
+        },
     ]
 
     if benchmark:

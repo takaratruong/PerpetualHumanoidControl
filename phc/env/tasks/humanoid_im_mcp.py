@@ -19,6 +19,10 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
         self.has_lateral = cfg["env"].get("has_lateral", False)
         self.z_activation = cfg["env"].get("z_activation", "relu")
 
+        self.act_noise = cfg['env'].get('act_noise', None) # Michael
+        assert self.act_noise is not None
+        print(f'Using action noise level: {self.act_noise}')
+
         self.act_collect = None 
         self.mean_action = None
         self.noisy_action = None
@@ -83,7 +87,8 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
             
             if self.use_noisy_action:
                 # actions = torch.normal(mean=actions,std=.025).clone() # NOISE
-                actions = torch.normal(mean=actions,std=.08).clone() # NOISE #.04 # max noise:  #.15 falls , .12 okay but bounces around, .1
+                # Michael - changed to 0.0 for ground truth data collection
+                actions = torch.normal(mean=actions,std=self.act_noise).clone() # NOISE #.04 # max noise:  #.15 falls , .12 okay but bounces around, .1
         else:
             actions = weights 
 

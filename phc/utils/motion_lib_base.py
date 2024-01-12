@@ -113,9 +113,15 @@ class MotionlibMode(Enum):
     
 class MotionLibBase():
 
-    def __init__(self, motion_file,  device, fix_height=FixHeightMode.full_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True):
+    def __init__(self, motion_file,  device, fix_height=FixHeightMode.full_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True,
+    collect_start_idx=0
+    ):
         self._device = device
         self.mesh_parsers = None
+
+        # MICHAEL
+        self.collect_start_idx = collect_start_idx
+        print(f'Collection start idx: {self.collect_start_idx}')
         
         self.load_data(motion_file,  min_length = min_length, im_eval = im_eval)
         self.setup_constants(fix_height = fix_height, masterfoot_conifg = masterfoot_conifg, multi_thread = multi_thread)
@@ -246,29 +252,36 @@ class MotionLibBase():
         # sample_idxes= sample_idxes[:len(skeleton_trees)]
 
         # SAMPLE BASED ON FILE NAMES: 
-
-        all_names = np.load('walking_motion_names.npy')
-        name2idx ={}
-        for name in all_names: 
-            # print(name)
-            # import ipdb; ipdb.set_trace()
-            if len(np.where(self._motion_data_keys == '0-'+name)[0]) != 0:
-                name2idx[name] = np.where(self._motion_data_keys == '0-'+name)[0][0]
-            else:
-                # print(f"Motion {name} not found in motion data keys in motion_lib_base.py")
-                pass
+    
+        # name2idx ={}
+        # for name in all_names: 
+        #     # print(name)
+        #     # import ipdb; ipdb.set_trace()
+        #     if len(np.where(self._motion_data_keys == '0-'+name)[0]) != 0:
+        #         name2idx[name] = np.where(self._motion_data_keys == '0-'+name)[0][0]
+        #     else:
+        #         # print(f"Motion {name} not found in motion data keys in motion_lib_base.py")
+        #         pass
         # # import ipdb; ipdb.set_trace()   
-        np.random.seed(0)
-        start_idx = 50
-        num_motions = 50
-        num_duplicates = 2
-        sample_idxes = list(name2idx.values())[start_idx:]
-        np.random.shuffle(sample_idxes)
-        sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
-        # import ipdb; ipdb.set_trace()
-        sample_idxes = torch.sort(sample_idxes).values
-        sample_idxes =sample_idxes.repeat_interleave(num_duplicates)
-        sample_idxes =sample_idxes[:len(skeleton_trees)]
+        #np.random.seed(0)
+
+        all_names = np.load('motion_names_KIT.npy')
+        all_names = set(all_names)
+        assert all([key[len('0-'):] in all_names for key in self._motion_data_keys])   
+
+        start_idx = self.collect_start_idx
+        end_idx = start_idx + 100 # we can do 100 motions at a time
+        #num_motions = 50
+        #num_duplicates = 1
+        sample_idxes = np.arange(start_idx, end_idx)
+
+
+        # #np.random.shuffle(sample_idxes)
+        # #sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
+        # sample_idxes = torch.tensor(sample_idxes, device=self._device)
+        # sample_idxes = torch.sort(sample_idxes).values
+        # #sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
+        # sample_idxes = sample_idxes[:len(skeleton_trees)]
         
         #######################################################################################3
 

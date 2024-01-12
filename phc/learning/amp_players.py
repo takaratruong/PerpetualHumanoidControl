@@ -62,7 +62,9 @@ class AMPPlayerContinuous(common_player.CommonPlayer):
     #         return current_action
 
     def restore(self, fn):
-        if self.mode == 'diff':
+        print(fn)
+        #fn = 'output/phc_shape_mcp_iccv/Humanoid.pth'
+        if self.mode == 'diff': # Michael - if we are in diff mode, don't load checkpoint
             return
         super().restore(fn)
         if self._normalize_amp_input:
