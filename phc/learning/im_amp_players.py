@@ -291,23 +291,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         
         if self.mode == 'diff':
             
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.07/17.58.49_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/epoch=7700-train_action_mse_error=0.003.ckpt'
-            #Experiment 1
-            # checkpoint = '/move/u/takaraet/Downloads/ckpts/ckpts/horizon=16/epoch=7700-train_action_mse_error=0.004.ckpt'
-            # checkpoint = '/move/u/takaraet/Downloads/ckpts/ckpts/horizon=32/epoch=7700-train_action_mse_error=0.005.ckpt'
-            # checkpoint = '/move/u/takaraet/Downloads/ckpts/ckpts/default_params/epoch=7700-train_action_mse_error=0.004.ckpt' # .4 , 0, .03
-            # checkpoint = '/move/u/takaraet/Downloads/ckpts/ckpts/n_obs=2/epoch=7950-train_action_mse_error=0.004.ckpt' # .9 , 0, .667
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.07/13.38.06_train_diffusion_transformer_nobs3/checkpoints/epoch=7700-train_action_mse_error=0.004.ckpt' # .9, 0, .7,
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.07/13.40.48_train_diffusion_transformer_nobs4/checkpoints/epoch=7900-train_action_mse_error=0.003.ckpt' # .6, .23, .8
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.08/19.27.59_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.08/19.27.59_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt' #nobs 2
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.08/20.41.24_train_diffusion_transformer_lowdim_pusht_lowdim/checkpoints/latest.ckpt' #nobs 1
-            # checkpoint = 'nobs3'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.56.58_noisy-clean/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.12.12_noise-clean/checkpoints/epoch=7700-train_action_mse_error=0.002.ckpt'
             checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.28.30_noise_only_final/checkpoints/epoch=7500-train_action_mse_error=0.002.ckpt'
             
             checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/10.57.53_noise_debug_h1/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
@@ -354,7 +337,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/07.10.40_v1.3_2048_0-200_cpy1/checkpoints/latest.ckpt'
 
-
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/07.34.04_v.3_2048/checkpoints/latest.ckpt'
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/epoch=0800-train_action_mse_error=0.004 (copy).ckpt'
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/latest.ckpt'
@@ -368,7 +350,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/10.39.35_v3.0_diffref/checkpoints/latest.ckpt'
             # checkpoint ='/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/11.08.15_v3.0_diffref_masked/checkpoints/latest.ckpt'
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/11.30.24_v3.0_diffref_masked/checkpoints/latest.ckpt'
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/16.40.28_v3.1_diffref_refGlobal_fixMasked/checkpoints/latest.ckpt'
+
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/17.22.39_v3.1_diffref_refLocal_maskApplied/checkpoints/latest.ckpt'
             
+            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/18.28.40_v3.2_test/checkpoints/latest.ckpt'
+
             # load checkpoint       
             payload = torch.load(open(checkpoint, 'rb'), pickle_module=dill)
 
@@ -387,7 +374,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         
         # NOTE: Keep hardcoded_text None to sample random texts from the m2t_map.
         # Set hardcoded_text to a string value if you want to manually specficy a text.
-        # hardcoded_text = None       
+        # hardcoded_text = None        
         hardcoded_text = 'a persons walks straight backwards'
         # hardcoded_text = 'a person walks forward'
         # hardcoded_text = 'a persons walks straight forwards'
@@ -398,8 +385,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         ###########################################################################
 
-        # obs_collect = None
-        # act_collect = None
         j = 0 
         # MAIN LOOP TAKARA
         print(f'Num envs: {self.env.num_envs}')
@@ -413,10 +398,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             if self.mode == 'diff':
                 # import ipdb; ipdb.set_trace() # Takara
 
-                # obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+                # obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs*0))] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 # obs_deque = collections.deque([self.env.task.diff_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 obs_deque = collections.deque([self.env.task.phc_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
-                
+
             # Sample a text goal - Michael
             if self.mode == 'diff':
                 sampled_texts = None
@@ -451,12 +436,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
                 for n in range(self.max_steps): # TAKARA EDIT 
                     obs_dict = self.env_reset(done_indices)
-                    # print(n)
-                    # time.sleep(.2)
                     if COLLECT_Z: z = self.get_z(obs_dict)  
                     
-                    observation = self.env.task.phc_obs # self.env.task.diff_obs                         # obs_collect = np.vstack((obs_collect, self.env.task.diff_obs)) if obs_collect is not None else self.env.task.diff_obs    
+                    observation = self.env.task.phc_obs
                     # observation = self.env.task.diff_obs
+                    # print(self.env.task.diff_obs.shape)
+                    # print(self.env.task.ref_obs.shape)
                     # observation = np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))
                     
                     # print(observation.shape)
@@ -473,7 +458,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         if observation.shape[0] == self.env.num_envs:
                             # obs_store[~done_envs, index_store[~done_envs]-1,:] = observation[~done_envs,:]
                             obs_store[~done_envs, n,:] = observation[~done_envs,:]
-
+                    
                     if self.mode == 'diff':
                         obs_deque.append(observation)
 
@@ -482,14 +467,14 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             {'obs': torch.tensor(np.stack(list(obs_deque), 1))},
                             torch.as_tensor(text_embeds, device=self.device), clean_traj
                         )
-        
+
                         action = action_dict['action'][:,0,:] # if horizon =1 then use action_pred
                     
                     # Step the environment 
                     obs_dict, r, done, info = self.env_step(self.env, action)
                     
                     # Collect Action here. The env_step goes from the heirarchical action to the actual torque, which we capture.  
-                    if self.mode == 'collect':
+                    if self.mode == 'collect':      
                         if self.env.task.mean_action.shape[0] == self.env.num_envs:
                             # index_store[~done_envs]-1
                             # act_store[~done_envs, index_store[~done_envs]-1,:] = self.env.task.mean_action[~done_envs,:]

@@ -1252,14 +1252,6 @@ def compute_imitation_observations_v3(root_pos, root_rot, body_pos, body_rot, bo
     return obs
 
 
-def get_global_obs(root_pos, root_rot, root_vel, root_rot_vel, body_pos, body_rot, body_vel, body_ang_vel):
-    
-    return body_pos  
-
-    # import ipdb; ipdb.set_trace()
-    # pass
-
-
 def get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel):
     # from scipy.spatial.transform import Rotation as R
 
@@ -1288,7 +1280,7 @@ def get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel
     local_ang_vel = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), global_ang_vel.view(-1, 3))
     
     obs.append(local_pos.view(B, 1, -1)) #get rid of x and y which are zero from the subtraction
-    obs.append(local_body_rot.view(B, 1, -1))
+    obs.append(torch_utils.quat_to_tan_norm(local_body_rot).view(B, 1, -1))
     obs.append(local_vel.view(B, 1, -1))
     obs.append(local_ang_vel.view(B, 1, -1))
     obs = torch.cat(obs, dim=-1).view(B, -1)
@@ -1302,33 +1294,28 @@ def get_local_ref_obs(root_pos, root_rot, body_pos, ref_body_pos, ref_body_rot, 
     heading_inv_rot = torch_utils.calc_heading_quat_inv(root_rot) # x,y,z w 
     heading_inv_rot_expand = heading_inv_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1))#.repeat_interleave(time_steps, 0)
  
-    # local body positions
-
-    # global_ref_body_pos = ref_body_pos.view(B, 1, J, 3).clone()
-    # global_ref_body_pos[:,:,:,:2] -= root_pos.unsqueeze(-2).repeat((1, body_pos.shape[1],1)).view(B, 1, J, 3)[:,:,:,:2]
-
-    # local_pos = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), body_pos.view(-1, 3))
-
-
-    # # local body rotations 
-    # global_body_rot = ref_body_rot[:, None]
-    # local_body_rot = torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), global_body_rot.view(-1, 4))    
-
-    # obs.append(local_pos.view(B, 1, -1)) #get rid of x and y which are zero from the subtraction
-    # obs.append(local_body_rot.view(B, 1, -1))
-    # obs = torch.cat(obs, dim=-1).view(B, -1)
+    # # local body positions
     
-    local_ref_body_pos = ref_body_pos.view(B, 1, J, 3) - root_pos.view(B, 1, 1, 3)  # preserves the body position
-    local_ref_body_pos = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), local_ref_body_pos.view(-1, 3))
-    local_ref_body_rot = torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), ref_body_rot.view(-1, 4))
-    # local_ref_body_rot = torch_utils.quat_to_tan_norm(local_ref_body_rot)
+    global_ref_body_pos = ref_body_pos.view(B, 1, J, 3).clone()
+    global_ref_body_pos[:,:,:,:2] -= root_pos.unsqueeze(-2).repeat((1, body_pos.shape[1],1)).view(B, 1, J, 3)[:,:,:,:2]
+    local_pos = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), body_pos.view(-1, 3))
 
-    obs.append(local_ref_body_pos.view(B, 1, -1))  # timestep  * 24 * 3
-    obs.append(local_ref_body_rot.view(B, 1, -1))  # timestep  * 24 * 6
+    # local body rotations 
+    global_body_rot = ref_body_rot[:, None]
+    local_body_rot = torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), global_body_rot.view(-1, 4))    
+
+    obs.append(local_pos.view(B, 1, -1)) #get rid of x and y which are zero from the subtraction
+    obs.append(torch_utils.quat_to_tan_norm(local_body_rot).view(B, 1, -1))  
     obs = torch.cat(obs, dim=-1).view(B, -1)
     
-    # obs = torch.cat(obs, dim=-1)
-
+    # local_ref_body_pos = ref_body_pos.view(B, 1, J, 3) - root_pos.view(B, 1, 1, 3)  # preserves the body position
+    # local_ref_body_pos = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), local_ref_body_pos.view(-1, 3))
+    # local_ref_body_rot = torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), ref_body_rot.view(-1, 4))
+    # obs.append(local_ref_body_pos.view(B, 1, -1))  # timestep  * 24 * 3
+    # obs.append(local_ref_body_rot.view(B, 1, -1))  # timestep  * 24 * 6
+    # obs = torch.cat(obs, dim=-1).view(B, -1)
+    # import ipdb; ipdb.set_trace()
+    
     return obs
 
 
@@ -1346,7 +1333,6 @@ def compute_imitation_observations_v6(root_pos, root_rot, body_pos, body_rot, bo
     heading_rot = torch_utils.calc_heading_quat(root_rot)
     heading_inv_rot_expand = heading_inv_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1)).repeat_interleave(time_steps, 0)
     heading_rot_expand = heading_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1)).repeat_interleave(time_steps, 0)
-    
 
     ##### Body position and rotation differences
     diff_global_body_pos = ref_body_pos.view(B, time_steps, J, 3) - body_pos.view(B, 1, J, 3)

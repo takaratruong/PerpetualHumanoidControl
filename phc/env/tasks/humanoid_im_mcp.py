@@ -83,7 +83,7 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
             
             if self.use_noisy_action:
                 # actions = torch.normal(mean=actions,std=.025).clone() # NOISE
-                actions = torch.normal(mean=actions,std=.04).clone() # NOISE #.04 # , .08 with 2x not enough, max noise:  #.15 falls , .12 okay but bounces around, .1
+                actions = torch.normal(mean=actions,std=.08).clone() # NOISE #.04 # , .08 with 2x not enough, max noise:  #.15 falls , .12 okay but bounces around, .1
         else:
             actions = weights 
 
