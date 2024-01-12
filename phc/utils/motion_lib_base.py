@@ -238,11 +238,14 @@ class MotionLibBase():
 
         # SAMPLE BASED ON NAME
         # name2idx = {name: idx for idx, name in enumerate(self._motion_data_keys)}
-        # names = ['0-KIT_8_WalkingStraightForwards03_poses' , '0-KIT_4_WalkingStraightBackwards04_poses','0-KIT_9_WalkInClockwiseCircle05_poses', '0-KIT_10_WalkInCounterClockwiseCircle06_poses']
-
+        # # names = ['0-KIT_8_WalkingStraightForwards03_poses' , '0-KIT_4_WalkingStraightBackwards04_poses','0-KIT_9_WalkInClockwiseCircle05_poses', '0-KIT_10_WalkInCounterClockwiseCircle06_poses']
+        # names = ['0-KIT_314_turn_right05_poses', '0-KIT_425_walking_01_poses', '0-KIT_183_walking_medium03_poses', '0-KIT_317_bend_right03_poses', '0-KIT_7_WalkInCounterClockwiseCircle05_poses', '0-KIT_205_walking_slow03_poses', '0-KIT_359_bend_right08_poses', '0-KIT_3_bend_left03_poses', '0-KIT_348_walking_fast02_poses', '0-KIT_424_walking_slow04_poses', '0-KIT_11_WalkInClockwiseCircle06_poses', '0-KIT_3_turn_left08_poses', '0-KIT_9_walking_slow02_poses', '0-KIT_425_bend_left05_poses', '0-KIT_3_walk_with_support03_poses', '0-KIT_12_WalkInCounterClockwiseCircle08_poses', '0-KIT_11_WalkingStraightForwards04_poses', '0-KIT_7_WalkingStraightForwards06_poses', '0-KIT_317_walking_slow03_poses', '0-KIT_3_bend_left01_poses', '0-KIT_3_walking_forward_4steps_right_05_poses', '0-KIT_12_WalkingStraightBackwards08_poses', '0-KIT_205_turn_left03_poses', '0-KIT_317_walking_fast04_poses', '0-KIT_6_LeftTurn02_1_poses', '0-KIT_167_walking_run05_poses', '0-KIT_8_WalkInClockwiseCircle06_poses', '0-KIT_11_WalkingStraightForwards07_poses', '0-KIT_317_bend_right06_poses', '0-KIT_4_WalkInClockwiseCircle03_poses', '0-KIT_3_turn_right10_poses', '0-KIT_3_bend_left06_poses', '0-KIT_6_WalkInCounterClockwiseCircle09_1_poses', '0-KIT_424_walking_slow07_poses', '0-KIT_317_bend_right01_poses', '0-KIT_7_WalkingStraightForwards04_poses', '0-KIT_9_LeftTurn10_poses', '0-KIT_7_WalkingStraightForwards09_poses', '0-KIT_183_walking_fast10_poses', '0-KIT_317_bend_left08_poses', '0-KIT_359_turn_left05_poses', '0-KIT_183_bend_left09_poses', '0-KIT_314_turn_left05_poses', '0-KIT_183_bend_right03_poses', '0-KIT_167_turn_right09_poses', '0-KIT_425_walking_05_poses', '0-KIT_167_turn_left08_poses', '0-KIT_167_turn_left02_poses', '0-KIT_425_walking_07_poses', '0-KIT_317_walking_fast07_poses', '0-KIT_7_WalkInClockwiseCircle10_poses', '0-KIT_317_walking_run07_poses', '0-KIT_9_WalkInCounterClockwiseCircle05_poses', '0-KIT_314_turn_left10_poses', '0-KIT_8_WalkInCounterClockwiseCircle03_poses', '0-KIT_359_walking_fast04_poses', '0-KIT_314_bend_left09_poses', '0-KIT_11_WalkingStraightBackwards07_1_poses', '0-KIT_167_bend_left01_poses', '0-KIT_9_walking_slow09_poses', '0-KIT_3_turn_left01_poses', '0-KIT_8_WalkingStraightForwards06_poses', '0-KIT_3_bend_left07_poses', '0-KIT_425_walking_medium08_poses', '0-KIT_183_walking_fast01_poses', '0-KIT_425_walking_slow02_poses', '0-KIT_424_turn_right09_poses', '0-KIT_8_RightTurn04_poses', '0-KIT_9_walking_slow08_poses', '0-KIT_11_WalkingStraightForwards01_poses', '0-KIT_317_walking_medium03_poses', '0-KIT_10_WalkInClockwiseCircle08_poses', '0-KIT_317_walking_fast02_poses', '0-KIT_8_WalkInClockwiseCircle02_poses', '0-KIT_9_LeftTurn01_poses', '0-KIT_11_WalkInCounterClockwiseCircle05_poses', '0-KIT_183_bend_left04_poses', '0-KIT_314_walking_run03_poses', '0-KIT_348_bend_right08_poses', '0-KIT_11_WalkInClockwiseCircle02_poses', '0-KIT_12_RightTurn07_poses', '0-KIT_317_bend_right05_poses', '0-KIT_3_walking_run06_poses', '0-KIT_424_bend_right05_poses', '0-KIT_8_WalkingStraightBackwards05_poses', '0-KIT_425_walking_slow11_poses', '0-KIT_317_turn_left10_poses', '0-KIT_348_bend_left01_poses', '0-KIT_314_walking_slow05_poses', '0-KIT_4_WalkingStraightBackwards03_poses', '0-KIT_424_bend_left08_poses', '0-KIT_3_walking_run05_poses', '0-KIT_8_WalkInClockwiseCircle09_poses', '0-KIT_6_RightTurn10_1_poses', '0-KIT_11_RightTurn06_poses', '0-KIT_314_turn_right11_poses', '0-KIT_9_bend_left04_poses', '0-KIT_348_walking_fast01_poses', '0-KIT_6_WalkInCounterClockwiseCircle01_1_poses', '0-KIT_424_bend_right08_poses']
+        
         # sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
-        # sample_idxes = torch.sort(sample_idxes).values
-        # sample_idxes = sample_idxes.repeat_interleave(10)
+        # # import ipdb; ipdb.set_trace()
+        # # sample_idxes = torch.sort(sample_idxes).values
+        # # np.random.shuffle(sample_idxes)
+        # # sample_idxes = sample_idxes.repeat_interleave(1)
         # sample_idxes= sample_idxes[:len(skeleton_trees)]
 
         # SAMPLE BASED ON FILE NAMES: 
@@ -270,7 +273,7 @@ class MotionLibBase():
         # sample_idxes =sample_idxes.repeat_interleave(num_duplicates)
         sample_idxes =sample_idxes[:len(skeleton_trees)]
         
-        seed = 1
+        seed = 14
         random.seed(seed)
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
@@ -303,7 +306,7 @@ class MotionLibBase():
             num_jobs = 1
         if flags.debug:
             num_jobs = 1
-
+        
         res_acc = {}  # using dictionary ensures order of the results.
         jobs = motion_data_list
         chunk = np.ceil(len(jobs) / num_jobs).astype(int)
@@ -464,7 +467,7 @@ class MotionLibBase():
 
     def sample_motions(self, n):
         motion_ids = torch.multinomial(self._sampling_batch_prob, num_samples=n, replacement=True).to(self._device)
-
+        
         return motion_ids
 
     def sample_time(self, motion_ids, truncate_time=None):

@@ -60,7 +60,7 @@ class AMPPlayerContinuous(common_player.CommonPlayer):
     #                                torch.clamp(current_action, -1.0, 1.0))
     #     else:
     #         return current_action
-
+    
     def restore(self, fn):
         if self.mode == 'diff':
             return

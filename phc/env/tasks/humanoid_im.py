@@ -111,8 +111,9 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         self.create_o3d_viewer()
         
         self.diff_obs = None 
+        self.phc_obs = None
         self.obs_collect = None 
-
+        self.ref_obs = None 
         return
     
     
@@ -742,10 +743,9 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
                 # print(rot_vel)
                 # print()
                 self.diff_obs = get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel)
+                self.phc_obs = compute_imitation_observations_v6(root_pos, root_rot, body_pos_subset, body_rot_subset, body_vel_subset, body_ang_vel_subset, ref_rb_pos_subset, ref_rb_rot_subset, ref_body_vel_subset, ref_body_ang_vel_subset, time_steps, self._has_upright_start)
 
-                # diffusion_observations_v6(root_pos, root_rot, root_vel, root_rot_vel, body_pos_subset, body_rot_subset, body_vel_subset, body_ang_vel_subset, time_steps, self._has_upright_start).squeeze().cpu().numpy()
-                # get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel)
-
+                self.ref_obs = get_local_ref_obs(root_pos, root_rot, body_pos, ref_rb_pos_subset, ref_rb_rot_subset, ref_body_vel_subset, ref_body_ang_vel_subset)
                 # temp_obs = torch.zeros_like(obs)
                 # temp_obs[:, 0:diff_obs.shape[1]] = diff_obs
                 # obs = temp_obs.clone() 
@@ -1259,6 +1259,7 @@ def get_global_obs(root_pos, root_rot, root_vel, root_rot_vel, body_pos, body_ro
     # import ipdb; ipdb.set_trace()
     # pass
 
+
 def get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel):
     # from scipy.spatial.transform import Rotation as R
 
@@ -1294,109 +1295,41 @@ def get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel
 
     return obs
 
-@torch.jit.script
-def diffusion_observations_v6(root_pos, root_rot, root_vel, root_rot_vel, body_pos, body_rot, body_vel, body_ang_vel, time_steps, upright):
-    # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, int, bool) -> Tensor
-    # Adding pose information at the back
-    # Future tracks in this obs will not contain future diffs.
-    # obs = []
-    # B, J, _ = body_pos.shape
-    # if not upright:
-    #     root_rot = remove_base_rot(root_rot)
-    #     # import ipdb; ipdb.set_trace()
-
-    # heading_inv_rot = torch_utils.calc_heading_quat_inv(root_rot)
-    # heading_rot = torch_utils.calc_heading_quat(root_rot)
-    # heading_inv_rot_expand = heading_inv_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1)).repeat_interleave(time_steps, 0)
-    # heading_rot_expand = heading_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1)).repeat_interleave(time_steps, 0)
-    
-    # ##### Body position and rotation differences
-    # diff_global_body_pos = body_pos.view(B, 1, J, 3)
-    # diff_local_body_pos_flat = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_body_pos.view(-1, 3))
-
-    # body_rot[:, None].repeat_interleave(time_steps, 1)
-    # diff_global_body_rot = body_rot[:, None].repeat_interleave(time_steps, 1)  # torch_utils.quat_mul(ref_body_rot.view(B, time_steps, J, 4), torch_utils.quat_conjugate())
-    # diff_local_body_rot_flat = torch_utils.quat_mul(torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), diff_global_body_rot.view(-1, 4)), heading_rot_expand.view(-1, 4))  # Need to be change of basis
-    
-    # ##### linear and angular  Velocity differences
-    # diff_global_vel = body_vel.view(B, 1, J, 3)
-    # diff_local_vel = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_vel.view(-1, 3))
-
-    # diff_global_ang_vel = body_ang_vel.view(B, 1, J, 3)
-    # diff_local_ang_vel = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_ang_vel.view(-1, 3))
-
-    # ## root vel 
-    # diff_global_root_vel = root_vel.view(B, 1, 1, 3)
-    # diff_local_root_vel = torch_utils.my_quat_rotate(heading_inv_rot.view(-1, 4), diff_global_root_vel.view(-1, 3))
-
-
-    # # make some changes to how futures are appended.
-    # # obs.append(diff_local_root_vel.view(B,time_steps,-1)) # root vel
-    # # obs.append(root_rot_vel.view(B,time_steps,-1)) # root rotation
-
-    # # obs.append(root_rot.view(B, time_steps, -1))
-    
-    # obs.append(diff_local_body_pos_flat.view(B, time_steps, -1))  # 1 * timestep * 24 * 3
-    # obs.append(torch_utils.quat_to_tan_norm(diff_local_body_rot_flat).view(B, time_steps, -1))  #  1 * timestep * 24 * 6
-    # obs.append(diff_local_vel.view(B, time_steps, -1))  # timestep  * 24 * 3
-    # obs.append(diff_local_ang_vel.view(B, time_steps, -1))  # timestep  * 24 * 3
-    
-    # obs = torch.cat(obs, dim=-1).view(B, -1)
-    # return obs
+def get_local_ref_obs(root_pos, root_rot, body_pos, ref_body_pos, ref_body_rot, ref_body_vel, ref_body_ang_vel):
+ # from scipy.spatial.transform import Rotation as R
+    B, J, _ = body_pos.shape  #B is num_envs
     obs = []
-    B, J, _ = body_pos.shape
-    if not upright:
-        root_rot = remove_base_rot(root_rot)
-        # import ipdb; ipdb.set_trace()
+    heading_inv_rot = torch_utils.calc_heading_quat_inv(root_rot) # x,y,z w 
+    heading_inv_rot_expand = heading_inv_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1))#.repeat_interleave(time_steps, 0)
+ 
+    # local body positions
 
-    heading_inv_rot = torch_utils.calc_heading_quat_inv(root_rot)
-    heading_rot = torch_utils.calc_heading_quat(root_rot)
-    heading_inv_rot_expand = heading_inv_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1)).repeat_interleave(time_steps, 0)
-    heading_rot_expand = heading_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1)).repeat_interleave(time_steps, 0)
+    # global_ref_body_pos = ref_body_pos.view(B, 1, J, 3).clone()
+    # global_ref_body_pos[:,:,:,:2] -= root_pos.unsqueeze(-2).repeat((1, body_pos.shape[1],1)).view(B, 1, J, 3)[:,:,:,:2]
+
+    # local_pos = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), body_pos.view(-1, 3))
+
+
+    # # local body rotations 
+    # global_body_rot = ref_body_rot[:, None]
+    # local_body_rot = torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), global_body_rot.view(-1, 4))    
+
+    # obs.append(local_pos.view(B, 1, -1)) #get rid of x and y which are zero from the subtraction
+    # obs.append(local_body_rot.view(B, 1, -1))
+    # obs = torch.cat(obs, dim=-1).view(B, -1)
     
-    ##### Body position and rotation differences
-    # diff_global_body_pos -= root_pos
+    local_ref_body_pos = ref_body_pos.view(B, 1, J, 3) - root_pos.view(B, 1, 1, 3)  # preserves the body position
+    local_ref_body_pos = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), local_ref_body_pos.view(-1, 3))
+    local_ref_body_rot = torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), ref_body_rot.view(-1, 4))
+    # local_ref_body_rot = torch_utils.quat_to_tan_norm(local_ref_body_rot)
 
-    diff_global_body_pos = body_pos.view(B, 1, J, 3)
-    diff_local_body_pos_flat = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_body_pos.view(-1, 3))
-
-    body_rot[:, None].repeat_interleave(time_steps, 1)
-    diff_global_body_rot = body_rot[:, None].repeat_interleave(time_steps, 1)  # torch_utils.quat_mul(ref_body_rot.view(B, time_steps, J, 4), torch_utils.quat_conjugate())
-    # diff_local_body_rot_flat = torch_utils.quat_mul(torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), diff_global_body_rot.view(-1, 4)), heading_rot_expand.view(-1, 4))  # Need to be change of basis
-    diff_local_body_rot_flat = torch_utils.quat_mul(torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), diff_global_body_rot.view(-1, 4)), heading_rot_expand.view(-1, 4))  # Need to be change of basis
-    
-    ##### linear and angular  Velocity differences
-    diff_global_vel = body_vel.view(B, 1, J, 3)
-    diff_local_vel = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_vel.view(-1, 3))
-
-    diff_global_ang_vel = body_ang_vel.view(B, 1, J, 3)
-    diff_local_ang_vel = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_ang_vel.view(-1, 3))
-
-    ## root vel 
-    diff_global_root_vel = root_vel.view(B, 1, 1, 3)
-    diff_local_root_vel = torch_utils.my_quat_rotate(heading_inv_rot.view(-1, 4), diff_global_root_vel.view(-1, 3))
-
-
-    # make some changes to how futures are appended.
-    # obs.append(diff_local_root_vel.view(B,time_steps,-1)) # root vel
-    # obs.append(root_rot_vel.view(B,time_steps,-1)) # root rotation
-
-    # obs.append(root_rot.view(B, time_steps, -1))
-    #root_pos, root_rot, root_vel, root_rot_vel
-
-    obs.append(root_pos.view(B, time_steps, -1))
-    obs.append(root_rot.view(B, time_steps, -1))
-    obs.append(root_vel.view(B, time_steps, -1))
-    obs.append(root_rot_vel.view(B, time_steps, -1))
-
-    obs.append(diff_global_body_pos.view(B, time_steps, -1))  # 1 * timestep * 24 * 3
-    obs.append(diff_global_body_rot.view(B, time_steps, -1))  #  1 * timestep * 24 * 6
-    obs.append(diff_global_vel.view(B, time_steps, -1))  # timestep  * 24 * 3
-    obs.append(diff_global_ang_vel.view(B, time_steps, -1))  # timestep  * 24 * 3
-    
+    obs.append(local_ref_body_pos.view(B, 1, -1))  # timestep  * 24 * 3
+    obs.append(local_ref_body_rot.view(B, 1, -1))  # timestep  * 24 * 6
     obs = torch.cat(obs, dim=-1).view(B, -1)
-    return obs
+    
+    # obs = torch.cat(obs, dim=-1)
 
+    return obs
 
 
 @torch.jit.script
@@ -1695,7 +1628,9 @@ def compute_humanoid_im_reset(reset_buf, progress_buf, contact_buf, contact_body
         if disableCollision:
             has_fallen[:] = False
         terminated = torch.where(has_fallen, torch.ones_like(reset_buf), terminated)
-            
+    
+    # terminated = torch.zeros_like(reset_buf)
+
         # if (contact_buf.abs().sum(dim=-1)[0] > 0).sum() > 2:
         #     np.set_printoptions(precision=4, suppress=1)
         #     print(contact_buf.numpy(), contact_buf.abs().sum(dim=-1)[0].nonzero().squeeze())
