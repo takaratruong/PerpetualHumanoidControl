@@ -273,15 +273,18 @@ class MotionLibBase():
         end_idx = start_idx + 100 # we can do 100 motions at a time
         #num_motions = 50
         #num_duplicates = 1
-        sample_idxes = np.arange(start_idx, end_idx)
+        sample_idxes = torch.arange(start_idx, end_idx,
+            dtype=torch.long, device=self._device)
 
+        # len(skeleton_trees) is the number of environments. Need to cut it here.
+        sample_idxes = sample_idxes[:len(skeleton_trees)]
 
         # #np.random.shuffle(sample_idxes)
         # #sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
         # sample_idxes = torch.tensor(sample_idxes, device=self._device)
         # sample_idxes = torch.sort(sample_idxes).values
         # #sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
-        # sample_idxes = sample_idxes[:len(skeleton_trees)]
+
         
         #######################################################################################3
 

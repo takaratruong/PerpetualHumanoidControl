@@ -297,6 +297,7 @@ def main():
 
     cfg['env']['act_noise'] = vargs['act_noise']
     cfg['env']['collect_start_idx'] = vargs['collect_start_idx']
+    cfg_train['params']['config']['collect_start_idx'] = vargs['collect_start_idx']
     # === 
     
     algo_observer = RLGPUAlgoObserver()

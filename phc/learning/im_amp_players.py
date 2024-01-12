@@ -7,6 +7,7 @@ import sys
 import pdb
 import random
 import os.path as osp
+import pathlib
 sys.path.append(os.getcwd())
 
 import numpy as np
@@ -40,8 +41,7 @@ from diffusion_policy.workspace.base_workspace import BaseWorkspace
 COLLECT_Z = False
 
 class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
-    def __init__(self, config):
-        # ipdb.set_trace() # Takara   
+    def __init__(self, config): 
         super().__init__(config)
 
         self.terminate_state = torch.zeros(self.env.task.num_envs, device=self.device)
@@ -53,8 +53,11 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         # Michael ==
         self.mode = config['mode'] # Set mode ('collect' or 'diff' from command line)
-        self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
-        self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
+        if self.mode == 'diff':
+            self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
+            self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
+
+        self.collect_start_idx = config['collect_start_idx'] # Starting index for collecting data
         # ==
 
         if COLLECT_Z:
@@ -89,9 +92,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             
             # termination_state = torch.logical_and(self.curr_stpes <= humanoid_env._motion_lib.get_motion_num_steps() - 1, info["terminate"]) # if terminate after the last frame, then it is not a termination. curr_step is one step behind simulation. 
             termination_state = info["terminate"]
-            # print(humanoid_env._motion_lib.get_motion_num_steps() )
-            # import ipdb;ipdb.set_trace() # TAkara
-
             # self._motion_lib = humanoid_env._motion_lib
      
             max_steps = 150
@@ -100,16 +100,17 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             if (~self.terminate_state).sum() > 0:
                 max_possible_id = humanoid_env._motion_lib._num_unique_motions - 1
                 curr_ids = humanoid_env._motion_lib._curr_motion_ids
-                if (max_possible_id == curr_ids).sum() > 0: # When you are running out of motions. 
-                    bound = (max_possible_id == curr_ids).nonzero()[0] + 1
-                    if (~self.terminate_state[:bound]).sum() > 0:
-                        if self.mode == 'collect':
-                            humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
-                        else:
-                            curr_max = max_steps # humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
-                    else:
-                        curr_max = (self.curr_stpes - 1)  # the ones that should be counted have teimrated
-                else:
+                # if (max_possible_id == curr_ids).sum() > 0: # When you are running out of motions. 
+                #     bound = (max_possible_id == curr_ids).nonzero()[0] + 1
+                #     if (~self.terminate_state[:bound]).sum() > 0:
+                #         if self.mode == 'collect':
+                #             humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
+                #         else:
+                #             curr_max = max_steps # humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
+                #     else:
+                #         curr_max = (self.curr_stpes - 1)  # the ones that should be counted have teimrated
+                # else:
+                if True: # Michael - keeping indentation of previous code
                     if self.mode == 'collect':
                         curr_max = humanoid_env._motion_lib.get_motion_num_steps()[~self.terminate_state].max()
                     else:
@@ -162,7 +163,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     print('FINAL SUCCESS RATE', self.success_rate)
                     print(f'Failed texts: {self.failed_texts}')
                     exit() 
-                    # import ipdb; ipdb.set_trace()
+                    
                     # terminate_hist = np.concatenate(self.terminate_memory)
                     # succ_idxes = np.nonzero(~terminate_hist[: num_evals])[0].tolist()
 
@@ -204,7 +205,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     #     zs_dump = {k: zs_all[idx].cpu().numpy() for idx, k in enumerate(humanoid_env._motion_lib._motion_data_keys)}
                     #     joblib.dump(zs_dump, osp.join(self.config['network_path'], "zs_run.pkl"))
                     
-                    # import ipdb; ipdb.set_trace()
+  
 
                     # # joblib.dump(np.concatenate(self.zs_all[: humanoid_env._motion_lib._num_unique_motions]), osp.join(self.config['network_path'], "zs.pkl"))
 
@@ -213,7 +214,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     # print("....")
 
                 done[:] = 1  # Turning all of the sequences done and reset for the next batch of eval.
-                # import ipdb; ipdb.set_trace() # Takara  
                 humanoid_env.forward_motion_samples()
                 self.terminate_state = torch.zeros(
                     self.env.task.num_envs, device=self.device
@@ -228,7 +228,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             # TAKARA
             update_str = f"Terminated: {self.terminate_state.sum().item()} | max frames: {curr_max} | steps {self.curr_stpes} | Start: {humanoid_env.start_idx} | Succ rate: {self.success_rate:.3f} | Mpjpe: {np.mean(self.mpjpe_all) * 1000:.3f}"
             self.pbar.set_description(update_str)
-        # import ipdb; ipdb.set_trace() # Takara
         
         return done
     
@@ -403,24 +402,18 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         obs_collect = np.vstack((obs_collect, self.env.task.diff_obs)) if obs_collect is not None else self.env.task.diff_obs
                         self.env.task.use_noisy_action = True
 
-                        # import ipdb; ipdb.set_trace() # Takara
-                        # if n==1137:
-                        #     import ipdb; ipdb.set_trace() # Takara
                         index_store = self.env.task.progress_buf
-                        # print(index_store)
                         if self.env.task.diff_obs.shape[0] == self.env.num_envs:
-                            obs_store[~done_envs, index_store[~done_envs]-1,:] = self.env.task.diff_obs[~done_envs,:]
-                            # obs_store[~done_envs, n,:] = self.env.task.diff_obs[~done_envs,:]
+                            #obs_store[~done_envs, index_store[~done_envs]-1,:] = self.env.task.diff_obs[~done_envs,:]
+                            obs_store[~done_envs, n, :] = self.env.task.diff_obs[~done_envs, :]
 
                     if self.mode == 'diff':
                         # action = my_model.inference(obs_dict['obs']).squeeze()
-                        # import ipdb; ipdb.set_trace() # Takara
                         obs_deque.append(self.env.task.diff_obs)
 
                         # action_dict = policy.predict_action( {'obs':torch.tensor(np.vstack(obs_deque)).unsqueeze(0)}, text_embed)
                         # action = action_dict['action'][0][0] # first env, first action,  
                         # action = torch.tensor(action.reshape(1, -1)).float().to('cuda')
-                        # import ipdb; ipdb.set_trace() # Takara
 
                         action_dict = policy.predict_action(
                             {'obs': torch.tensor(np.stack(list(obs_deque), 1))},
@@ -502,10 +495,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         #     import ipdb; ipdb.set_trace() # Takara 
                         
                         if done_envs.all():
-                            np.savez('raw_data.npz', obs=obs_store, act=act_store, ep_len = self.motion_lib.get_motion_num_steps().cpu().numpy(), ep_name = self.motion_lib.curr_motion_keys) # ADD EPLEN 
-                            # np.save('raw_states.npy', obs_collect)
-                            # np.save('raw_actions.npy', act_collect)
-                            import ipdb; ipdb.set_trace() # Takara 
+                            pathlib.Path('collected_data/').mkdir(parents=True, exist_ok=True)
+                            data_fname = f'phc_data_{self.collect_start_idx}.npz'
+                            data_path = os.path.join('collected_data', data_fname)
+                            np.savez(data_path, obs=obs_store, act=act_store, ep_len = self.motion_lib.get_motion_num_steps().cpu().numpy(), ep_name = self.motion_lib.curr_motion_keys) # ADD EPLEN 
+
+                            exit()
 
                     if done_count > 0:
                         # import ipdb; ipdb.set_trace() # Takara
