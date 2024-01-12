@@ -316,7 +316,7 @@ class HumanoidAMP(Humanoid):
         if (self._enable_hist_obs):
             self._num_self_obs += self._num_amp_obs_steps * self._num_amp_obs_per_step
         return
-
+        
     # def _load_motion(self, motion_file):
     #     import ipdb
     #     ipdb.set_trace()
