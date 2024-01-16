@@ -114,13 +114,15 @@ class MotionlibMode(Enum):
 class MotionLibBase():
 
     def __init__(self, motion_file,  device, fix_height=FixHeightMode.full_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True,
-    collect_start_idx=0
+    collect_start_idx=0, collect_step_idx=None
     ):
         self._device = device
         self.mesh_parsers = None
 
         # MICHAEL
         self.collect_start_idx = collect_start_idx
+        self.collect_step_idx = collect_step_idx
+        assert self.collect_step_idx is not None
         print(f'Collection start idx: {self.collect_start_idx}')
         
         self.load_data(motion_file,  min_length = min_length, im_eval = im_eval)
@@ -269,14 +271,27 @@ class MotionLibBase():
 
         all_names = np.load('motion_names_KIT.npy')
         all_names = set(all_names)
-        assert all([key[len('0-'):] in all_names for key in self._motion_data_keys])   
+        assert all([key[len('0-'):] in all_names for key in self._motion_data_keys])  
+
+        print(f'Number of motion keys: {len(self._motion_data_keys)}')
 
         start_idx = self.collect_start_idx
-        end_idx = start_idx + 100 # we can do 100 motions at a time
+        end_idx = min(start_idx + self.collect_step_idx, len(self._motion_data_keys))
         #num_motions = 50
         #num_duplicates = 1
-        sample_idxes = torch.arange(start_idx, end_idx,
-            dtype=torch.long, device=self._device)
+
+        # shuffled_idxs = np.load('idxs_amass_copycat_take5_train.npy')
+        # assert len(shuffled_idxs) == len(self._motion_data_keys)
+
+        # train_split_idx = int(0.85 * len(shuffled_idxs))
+        # shuffled_idxs = shuffled_idxs[:train_split_idx]
+
+        # val_split_idx = int(0.90 * len(shuffled_idxs))
+        # shuffled_idxs = shuffled_idxs[train_split_idx:val_split_idx]
+
+        sample_idxes = np.arange(start_idx, end_idx)
+        #sample_idxes = shuffled_idxs[sample_idxes] # permuation of motion data keys
+        sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
 
         # len(skeleton_trees) is the number of environments. Need to cut it here.
         sample_idxes = sample_idxes[:len(skeleton_trees)]
@@ -287,12 +302,7 @@ class MotionLibBase():
         # sample_idxes = torch.sort(sample_idxes).values
         # #sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
 
-        
-        seed = 14
-        random.seed(seed)
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        np.random.seed(seed)
+    
         #######################################################################################3
 
         self._curr_motion_ids = sample_idxes

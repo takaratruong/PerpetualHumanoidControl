@@ -72,7 +72,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         self._motion_start_times_offset = torch.zeros(self.num_envs).to(self.device) #*0 #+3
         # Michael
         self.collect_start_idx = cfg['env']['collect_start_idx']
-
+        self.collect_step_idx = cfg['env']['collect_step_idx']
 
         self._cycle_counter = torch.zeros(self.num_envs, device=self.device, dtype=torch.int)
 
@@ -300,7 +300,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
             motion_eval_file = motion_train_file
             self._motion_train_lib = MotionLibSMPL(
                 motion_file=motion_train_file, device=self.device, masterfoot_conifg=self._masterfoot_config, min_length=self._min_motion_len, im_eval=flags.im_eval,
-                collect_start_idx=self.collect_start_idx
+                collect_start_idx=self.collect_start_idx, collect_step_idx=self.collect_step_idx
             )
             # self._motion_eval_lib = MotionLibSMPL(motion_file=motion_eval_file, device=self.device, masterfoot_conifg=self._masterfoot_config, min_length=self._min_motion_len, im_eval=True)
 

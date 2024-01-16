@@ -45,8 +45,8 @@ if not USE_CACHE:
 
 class MotionLibSMPL(MotionLibBase):
 
-    def __init__(self, motion_file, device, fix_height=FixHeightMode.full_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True, collect_start_idx=0):
-        super().__init__(motion_file=motion_file, device=device, fix_height=fix_height, masterfoot_conifg=masterfoot_conifg, min_length=min_length, im_eval=im_eval, multi_thread=multi_thread, collect_start_idx=collect_start_idx)
+    def __init__(self, motion_file, device, fix_height=FixHeightMode.full_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True, collect_start_idx=0, collect_step_idx=None):
+        super().__init__(motion_file=motion_file, device=device, fix_height=fix_height, masterfoot_conifg=masterfoot_conifg, min_length=min_length, im_eval=im_eval, multi_thread=multi_thread, collect_start_idx=collect_start_idx, collect_step_idx=collect_step_idx)
         
         data_dir = "phc/data/smpl"
         smpl_parser_n = SMPL_Parser(model_path=data_dir, gender="neutral")

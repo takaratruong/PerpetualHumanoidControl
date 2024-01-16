@@ -469,6 +469,17 @@ def get_args(benchmark=False):
             "default": 0,
             "type": int
         },
+        {
+            "name": "--collect_step_idx",
+            "default": 0,
+            "type": int
+        },
+        {
+            "name": "--obs_type",
+            "default": 'phc',
+            "type": str,
+            'choices': ['phc', 't2m']
+        },
     ]
 
     if benchmark:

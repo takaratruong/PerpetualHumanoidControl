@@ -48,6 +48,7 @@ from phc.utils.flags import flags
 
 import numpy as np
 import copy
+import random
 import torch
 import wandb
 
@@ -297,12 +298,16 @@ def main():
 
     cfg['env']['act_noise'] = vargs['act_noise']
     cfg['env']['collect_start_idx'] = vargs['collect_start_idx']
+    cfg['env']['collect_step_idx'] = vargs['collect_step_idx']
     cfg_train['params']['config']['collect_start_idx'] = vargs['collect_start_idx']
+    cfg_train['params']['config']['collect_step_idx'] = vargs['collect_step_idx']
+    cfg_train['params']['config']['act_noise'] = vargs['act_noise']
+    cfg_train['params']['config']['obs_type'] = vargs['obs_type']
     # === 
-    
-    algo_observer = RLGPUAlgoObserver()
     # import ipdb; ipdb.set_trace() # TAKARA
     
+    
+    algo_observer = RLGPUAlgoObserver()
     runner = build_alg_runner(algo_observer)
     runner.load(cfg_train)
     runner.reset()
@@ -310,6 +315,12 @@ def main():
     
     return
 
+
+def seed_all(seed):
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
 
 if __name__ == '__main__':
     main()

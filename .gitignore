@@ -1,4 +1,6 @@
 
+slurm_out
+
 *.json
 
 # Byte-compiled / optimized / DLL files

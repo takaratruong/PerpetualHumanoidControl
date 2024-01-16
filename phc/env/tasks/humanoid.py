@@ -783,7 +783,6 @@ class Humanoid(BaseTask):
                 for i in tqdm(range(len(jobs) - 1)):
                     res = queue.get()
                     res_acc.update(res)
-
                 # if flags.debug:
                 # asset_options.fix_base_link = True
 
