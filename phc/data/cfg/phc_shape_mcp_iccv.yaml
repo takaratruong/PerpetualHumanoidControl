@@ -41,7 +41,7 @@ env:
   getup_schedule: True
   recoverySteps: 90
   zero_out_far_steps: 90
-  recoveryEpisodeProb: 0.5
+  recoveryEpisodeProb: .5
   fallInitProb: 0.3
 
   hard_negative: False

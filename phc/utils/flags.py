@@ -10,4 +10,5 @@ flags = Flags({
     'debug': False,
     "real_traj": False,
     "im_eval": False,
+    # "text_input": "default",
     })

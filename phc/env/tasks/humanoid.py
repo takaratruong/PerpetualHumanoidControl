@@ -1167,8 +1167,34 @@ class Humanoid(BaseTask):
                 else:
                     body_shape_params = self.humanoid_shapes[env_ids]
                 obs = compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, self._dof_obs_size, self._dof_offsets, body_shape_params, self._local_root_obs, self._root_height_obs, self._has_upright_start, self._has_shape_obs)
-            else:
-                obs = compute_humanoid_observations(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, self._local_root_obs, self._root_height_obs, self._dof_obs_size, self._dof_offsets)
+            
+            
+            
+        # TAKARA EDIT
+        if (env_ids is None):
+            root_pos = self._rigid_body_pos[:, 0, :]
+            root_rot = self._rigid_body_rot[:, 0, :]
+            root_vel = self._rigid_body_vel[:, 0, :]
+            root_ang_vel = self._rigid_body_ang_vel[:, 0, :]
+            dof_pos = self._dof_pos
+            dof_vel = self._dof_vel
+            key_body_pos = self._rigid_body_pos[:, self._key_body_ids, :]
+        else:
+            root_pos = self._rigid_body_pos[env_ids][:, 0, :]
+            root_rot = self._rigid_body_rot[env_ids][:, 0, :]
+            root_vel = self._rigid_body_vel[env_ids][:, 0, :]
+            root_ang_vel = self._rigid_body_ang_vel[env_ids][:, 0, :]
+            dof_pos = self._dof_pos[env_ids]
+            dof_vel = self._dof_vel[env_ids]
+            key_body_pos = self._rigid_body_pos[env_ids][:, self._key_body_ids, :]
+
+        if (env_ids is None):
+            body_shape_params = self.humanoid_shapes
+        else:
+            body_shape_params = self.humanoid_shapes[env_ids]
+        x = compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, self._dof_obs_size, self._dof_offsets, body_shape_params, self._local_root_obs, self._root_height_obs, self._has_upright_start, self._has_shape_obs)
+            
+        
         return obs
 
     def _reset_actors(self, env_ids):
@@ -1534,7 +1560,7 @@ def remove_base_rot(quat):
     return quat_mul(quat, base_rot.repeat(shape, 1))
 
 
-@torch.jit.script
+# @torch.jit.script
 def compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, dof_obs_size, dof_offsets, smpl_params, local_root_obs, root_height_obs, upright, has_smpl_params):
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, int, List[int], Tensor, bool, bool,bool, bool) -> Tensor
     root_h = root_pos[:, 2:3]
@@ -1581,6 +1607,8 @@ def compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_ve
     ]
     if has_smpl_params:
         obs_list.append(smpl_params)
+    
+    # import ipdb;ipdb.set_trace()
     obs = torch.cat(obs_list, dim=-1)
 
     return obs

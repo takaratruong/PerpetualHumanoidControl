@@ -27,6 +27,7 @@ import collections
 import clip 
 
 
+
 #TAKARA
 # sys.path.insert(0,'/move/u/takaraet/motion_mimic')
 # from algs.diff_policy import DiffusionPolicy
@@ -58,7 +59,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
         self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
         # ==
-
+        
         if COLLECT_Z:
             self.zs, self.zs_all = [], []
 
@@ -84,7 +85,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
     def _post_step(self, info, done):
         super()._post_step(info)
-    
+        # return done
+
+        if self.mode == 'pert':
+            return torch.zeros(self.env.num_envs).to(self.device) #(torch.arange(self.env.num_envs)).to(self.device)
+
+
         if flags.im_eval:
 
             humanoid_env = self.env.task
@@ -93,11 +99,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             termination_state = info["terminate"]
             # print(humanoid_env._motion_lib.get_motion_num_steps() )
             # import ipdb;ipdb.set_trace() # TAkara
-
             # self._motion_lib = humanoid_env._motion_lib
 
-            max_steps = 150
-
+            max_steps = 200
+            
             self.terminate_state = torch.logical_or(termination_state, self.terminate_state)
             if (~self.terminate_state).sum() > 0:
                 max_possible_id = humanoid_env._motion_lib._num_unique_motions - 1
@@ -129,7 +134,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             self.pred_pos.append(info["body_pos"])
             if COLLECT_Z: self.zs.append(info["z"])
             self.curr_stpes += 1
-
+            
             if self.curr_stpes >= curr_max or self.terminate_state.sum() == humanoid_env.num_envs:
                 self.terminate_memory.append(self.terminate_state.cpu().numpy())
                 self.success_rate = (1 - np.concatenate(self.terminate_memory)[: humanoid_env._motion_lib._num_unique_motions].mean())
@@ -232,9 +237,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         # import ipdb; ipdb.set_trace() # Takara
         if self.mode == 'diff': 
             done = torch.tensor([int(self.curr_stpes > self.max_steps)])
-        
+
         return done
-    
 
     def get_z(self, obs_dict):
         obs = obs_dict['obs']
@@ -282,84 +286,53 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         # import ipdb; ipdb.set_trace() # Takara
         
-        # obs_store = np.zeros((self.env.num_envs, max_steps, 312)) # 312 for local obs , 576 for phc obs, 648 312 + 
+        # obs_store = np.zeros((self.env.num_envs, max_steps, 360)) # 360 for t2m, 576 for phc obs, 648 312 + 
         # obs_store = np.zeros((self.env.num_envs, max_steps, 480)) # for diff obs + ref obs  
         obs_store = np.zeros((self.env.num_envs, max_steps, 576)) #  for phc obs 
-        
+        # obs_store = np.zeros((self.env.num_envs, max_steps, 432)) #  for phc obs 
+
         act_store = np.zeros((self.env.num_envs, max_steps, 69)) 
         done_envs = np.zeros(self.env.num_envs,dtype=bool)
         
         if self.mode == 'diff':
             
-            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.28.30_noise_only_final/checkpoints/epoch=7500-train_action_mse_error=0.002.ckpt'
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/19.57.53_v0_nobs4_textMask01/checkpoints/latest.ckpt'
+
+            # obs experiment 
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/22.14.05_v0_nobs2/checkpoints/checkpoint_epoch_2000.ckpt' #.6 walk backwards,doesn't follow command
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/19.57.53_v0_nobs4_textMask01/checkpoints/checkpoint_epoch_2000.ckpt' # .15, but follows command better
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/21.49.19_v0_nobs8/checkpoints/checkpoint_epoch_2000.ckpt' # .25
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/21.09.19_v0_nobs30/checkpoints/latest.ckpt'#
             
-            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/10.57.53_noise_debug_h1/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.54.37_clean_only/checkpoints/epoch=7700-train_action_mse_error=0.003.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/14.07.31_action_masked_nob2/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/17.42.47_noise-clean_debug_shuffle/checkpoints/epoch=7800-train_action_mse_error=0.001.ckpt'
-            # checkpoint = "/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.28.30_noise_only_final/checkpoints/epoch=7500-train_action_mse_error=0.002.ckpt"
-
-#             checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/14.07.31_action_masked_nob2/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.39.18_walking-diffpol_v0.3/checkpoints/'
-#             # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.39.39_walking-diffpol_v0.4/checkpoints/'
-#             # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.40.14_walking-diffpol_v0.5/checkpoints/epoch=7800-train_action_mse_error=0.006.ckpt'
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.40.14_walking-diffpol_v0.6/checkpoints/epoch=7850-train_action_mse_error=0.004.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/09.57.52_v6_fixed/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/14.01.21_combined_batch_test/checkpoints/latest.ckpt'
+            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/22.46.55_v1_nobs2/checkpoints/checkpoint_epoch_1000.ckpt' #.74
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/22.58.48_v1_nobs4/checkpoints/checkpoint_epoch_1000.ckpt' #.74
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.12/23.10.06_v1_nobs8/checkpoints/checkpoint_epoch_1000.ckpt' #.6
             
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/10.48.36_noisy_mask_fixed/checkpoints/latest.ckpt' #.76
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/14.43.23_cond_layers2/checkpoints/epoch=7650-train_action_mse_error=0.001.ckpt' #.8 
+            # all of KIT 
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.13/07.42.05_phc_task_v1.2/checkpoints/epoch=7900-train_action_mse_error=0.001.ckpt' # .82
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.13/07.42.26_t2m_task_v1.1/checkpoints/epoch=7900-train_action_mse_error=0.001.ckpt'
             
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/16.18.42_cond_layers2_noText/checkpoints/epoch=7600-train_action_mse_error=0.001.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/18.24.51_phc_obs/checkpoints/latest.ckpt' 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/19.47.44_phc_obs/checkpoints/latest.ckpt' # 2obs
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/20.41.28_phc_obs_hor1/checkpoints/latest.ckpt'
-
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/21.20.41_phc_obs_hor1/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/21.33.04_diff_ref/checkpoints/latest.ckpt'
-
-            # noise level exp
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.30.40_walking-diffpol_v0.6/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt' #.099
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.30.40_walking-diffpol_v0.5/checkpoints/epoch=7750-train_action_mse_error=0.003.ckpt'
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.29.50_walking-diffpol_v0.4/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.26.32_walking-diffpol_v0.3/checkpoints/epoch=6850-train_action_mse_error=0.002.ckpt' #.06
-            # checkpoint ='/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/23.24.29_v3/checkpoints/epoch=7950-train_action_mse_error=0.001.ckpt'
+            checkpoint ='/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.14/11.50.38_multi_test/checkpoints/checkpoint_epoch_0.ckpt'
+            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.14/12.06.06_multitest/checkpoints/checkpoint_epoch_7500.ckpt'
             
-            #debug exps
-            # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/06.39.49_batch2048/checkpoints/latest.ckpt' #3300
-            # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/06.51.11_v1.3_2048/checkpoints/latest.ckpt' #3300
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.14/18.44.17_t2m_task_v1.3/checkpoints/checkpoint_epoch_0.ckpt'
+            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.14/22.31.53_t2m_task_v1.4/checkpoints/checkpoint_epoch_2000.ckpt'
 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/07.10.40_v1.3_2048_0-200_cpy1/checkpoints/latest.ckpt'
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.15/10.46.10_t2m_task_obsCond_masked_v1.0/checkpoints/checkpoint_epoch_2000.ckpt'
+            # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/14.39.49_t2m_task_v1.4/checkpoints/checkpoint_epoch_1000.ckpt'
+            # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/14.39.49_t2m_task_v1.4/checkpoints/checkpoint_epoch_2000.ckpt'
+            checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/14.39.49_t2m_task_v1.4/checkpoints/checkpoint_epoch_1700.ckpt'            
+            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/19.38.57_phc_task_v1.5/checkpoints/checkpoint_epoch_1000.ckpt'
 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/07.34.04_v.3_2048/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/epoch=0800-train_action_mse_error=0.004 (copy).ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/epoch=1800-train_action_mse_error=0.003.ckpt'
-            
-            # PHC Task 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.46.29_v2.0/checkpoints/latest.ckpt' #tracking
-            
-            # Ref and motion conditioned 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/10.39.35_v3.0_diffref/checkpoints/latest.ckpt'
-            # checkpoint ='/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/11.08.15_v3.0_diffref_masked/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/11.30.24_v3.0_diffref_masked/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/16.40.28_v3.1_diffref_refGlobal_fixMasked/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/17.22.39_v3.1_diffref_refLocal_maskApplied/checkpoints/latest.ckpt'
-            
-            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/18.28.40_v3.2_test/checkpoints/latest.ckpt'
+            # checkpoint = "/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.17/00.59.30_bm_task/checkpoints/checkpoint_epoch_2000.ckpt"
 
             # load checkpoint       
             payload = torch.load(open(checkpoint, 'rb'), pickle_module=dill)
 
             hydra_cfg = payload['cfg']
+            # hydra_cfg['task']['dataset']['zarr_path'] ='/move/u/takaraet/my_diffusion_policy/phc_data/v0.0/phc_data_v0.0.zarr'
+
+            # import ipdb; ipdb.set_trace() # Takara  
             cls = hydra.utils.get_class(hydra_cfg._target_)
             workspace = cls(hydra_cfg)
             workspace: BaseWorkspace
@@ -374,17 +347,19 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         
         # NOTE: Keep hardcoded_text None to sample random texts from the m2t_map.
         # Set hardcoded_text to a string value if you want to manually specficy a text.
-        # hardcoded_text = None        
-        hardcoded_text = 'a persons walks straight backwards'
+        hardcoded_text = None    
+        # random.seed(25)   
+        # hardcoded_text = 'a person walks backwards' 
+        # hardcoded_text = 'a persons walks straight backwards'
         # hardcoded_text = 'a person walks forward'
         # hardcoded_text = 'a persons walks straight forwards'
         # hardcoded_text = 'a person walks in a clockwise circle.'
+        # hardcoded_text = 'a person walks 4 steps and stops'
         # hardcoded_text = 'a person walks in a counter clockwise circle.'
-        
+        hardcoded_text = 'stand still'
         clip_model = load_and_freeze_clip(device='cuda')
 
         ###########################################################################
-
         j = 0 
         # MAIN LOOP TAKARA
         print(f'Num envs: {self.env.num_envs}')
@@ -394,15 +369,19 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             if games_played >= n_games:
                 break
             obs_dict = self.env_reset()
+            if self.mode =='pert':
+                self.env.task._generate_fall_states()
 
             if self.mode == 'diff':
                 # import ipdb; ipdb.set_trace() # Takara
 
-                # obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs*0))] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
-                # obs_deque = collections.deque([self.env.task.diff_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
-                obs_deque = collections.deque([self.env.task.phc_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+                # obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+                obs_deque = collections.deque([self.env.task.diff_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+                # obs_deque = collections.deque([self.env.task.phc_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
 
-            # Sample a text goal - Michael
+            # Sample a text goal - Michael  
+            # import ipdb; ipdb.set_trace() # Takara
+             
             if self.mode == 'diff':
                 sampled_texts = None
                 if hardcoded_text is None:
@@ -436,16 +415,16 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
                 for n in range(self.max_steps): # TAKARA EDIT 
                     obs_dict = self.env_reset(done_indices)
+
                     if COLLECT_Z: z = self.get_z(obs_dict)  
-                    
-                    observation = self.env.task.phc_obs
-                    # observation = self.env.task.diff_obs
+
+                    # observation = self.env.task.phc_obs
+                    observation = self.env.task.diff_obs
                     # print(self.env.task.diff_obs.shape)
                     # print(self.env.task.ref_obs.shape)
-                    # observation = np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))
-                    
+
                     # print(observation.shape)
-                    if self.mode == 'collect':
+                    if self.mode in ['collect', 'pert']:
                         if has_masks:
                             masks = self.env.get_action_mask()
                             action = self.get_masked_action(obs_dict, masks, is_determenistic)
@@ -453,15 +432,19 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             action = self.get_action(obs_dict, is_determenistic)
 
                         self.env.task.use_noisy_action = True
-                        # index_store = self.env.task.progress_buf
                         
                         if observation.shape[0] == self.env.num_envs:
-                            # obs_store[~done_envs, index_store[~done_envs]-1,:] = observation[~done_envs,:]
                             obs_store[~done_envs, n,:] = observation[~done_envs,:]
                     
                     if self.mode == 'diff':
                         obs_deque.append(observation)
 
+                        if self.env.task.text_input:
+                            text_embed = encode_text(self.env.task.text_input, clip_model)
+                            text_embeds = text_embed.repeat(self.env.num_envs, 1)
+
+                        # import ipdb; ipdb.set_trace() # Takara
+                        # print(self.env.task.text_input)
                         clean_traj = torch.ones(self.env.num_envs)
                         action_dict = policy.predict_action(
                             {'obs': torch.tensor(np.stack(list(obs_deque), 1))},
@@ -469,15 +452,14 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         )
 
                         action = action_dict['action'][:,0,:] # if horizon =1 then use action_pred
-                    
+                        # import ipdb; ipdb.set_trace() # Takara
+
                     # Step the environment 
                     obs_dict, r, done, info = self.env_step(self.env, action)
-                    
+
                     # Collect Action here. The env_step goes from the heirarchical action to the actual torque, which we capture.  
-                    if self.mode == 'collect':      
+                    if self.mode in ['collect', 'pert']:      
                         if self.env.task.mean_action.shape[0] == self.env.num_envs:
-                            # index_store[~done_envs]-1
-                            # act_store[~done_envs, index_store[~done_envs]-1,:] = self.env.task.mean_action[~done_envs,:]
                             act_store[~done_envs, n,:] = self.env.task.mean_action[~done_envs,:]
 
                     cr += r
@@ -517,6 +499,16 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                                      ep_len = self.motion_lib.get_motion_num_steps().cpu().numpy(), 
                                      ep_name = self.motion_lib.curr_motion_keys,
                                      terminated = torch.argwhere(self.terminate_state).squeeze().numpy()) 
+                            import ipdb; ipdb.set_trace() 
+                            # Data saved 
+                    if self.mode=='pert':
+                        if n >=150:
+                            np.savez('raw_recovery_data.npz', obs=obs_store, act=act_store, 
+                                    #  ep_len = self.motion_lib.get_motion_num_steps().cpu().numpy(), 
+                                    #  ep_name = self.motion_lib.curr_motion_keys,
+                                     terminated = torch.argwhere(self.env.task.im_reward_track <.75).squeeze().numpy()) 
+                            
+                            print('num of failed trajectories:', torch.argwhere(self.env.task.im_reward_track <.8).squeeze().numpy().shape[0])
                             import ipdb; ipdb.set_trace() 
                             # Data saved 
 

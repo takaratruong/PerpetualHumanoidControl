@@ -71,7 +71,7 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
                 else:
                     x_all = torch.stack([net(curr_obs) for net in self.actors], dim=1)
                 actions = torch.sum(weights[:, :, None] * x_all, dim=1)
-
+            
             # COLLECTING ACTIONS
             self.mean_action = actions.squeeze().cpu().numpy() 
             # self.noisy_action = torch.normal(mean=actions,std=.03).clone().squeeze().cpu().numpy() # NOISE
@@ -83,7 +83,7 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
             
             if self.use_noisy_action:
                 # actions = torch.normal(mean=actions,std=.025).clone() # NOISE
-                actions = torch.normal(mean=actions,std=.08).clone() # NOISE #.04 # , .08 with 2x not enough, max noise:  #.15 falls , .12 okay but bounces around, .1
+                actions = torch.normal(mean=actions,std=.06).clone() # NOISE #.04 # , .08 with 2x not enough, max noise:  #.15 falls , .12 okay but bounces around, .1
         else:
             actions = weights 
 
