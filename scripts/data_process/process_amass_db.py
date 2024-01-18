@@ -225,9 +225,9 @@ def process_qpos_list(qpos_list):
 
 
 amass_splits = {
-    'vald': ['KIT'], #['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
-    'test': ['KIT'],# ['Transitions_mocap', 'SSM_synced'],
-    'train': ['KIT'],#['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
+    'vald': ['KIT'],  #['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
+    'test': ['KIT'],  # ['Transitions_mocap', 'SSM_synced'],
+    'train': ['KIT'], #['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
 }
 
 amass_split_dict = {}

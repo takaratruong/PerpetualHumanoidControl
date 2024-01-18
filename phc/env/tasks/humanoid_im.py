@@ -98,6 +98,8 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         # Overriding
         self.reward_raw = torch.zeros((self.num_envs, 5 if self.power_reward else 4)).to(self.device)
         self.power_coefficient = cfg["env"].get("power_coefficient", 0.0005)
+        
+        self.im_reward_track = torch.zeros(self.num_envs).to(self.device)
 
         if (not self.headless or flags.server_mode):
             self._build_marker_state_tensors()
@@ -120,7 +122,52 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         self.ref_obs = None 
         return
     
+    def _generate_fall_states(self):
+        print("#################### Generating Fall State ####################")
+        max_steps = 150
+        # max_steps = 50000
+
+        env_ids = to_torch(np.arange(self.num_envs), device=self.device, dtype=torch.long)
+        root_states = self._initial_humanoid_root_states[env_ids].clone()
+
+        root_states[..., 3:7] = torch.randn_like(root_states[..., 3:7])  ## Random root rotation
+        root_states[..., 3:7] = torch.nn.functional.normalize(root_states[..., 3:7], dim=-1)
+        self._humanoid_root_states[env_ids] = root_states
+
+        env_ids_int32 = self._humanoid_actor_ids[env_ids]
+        self.gym.set_actor_root_state_tensor_indexed(self.sim, gymtorch.unwrap_tensor(self._root_states), gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
+        # _dof_state: from the currently simulated states
+        self.gym.set_dof_state_tensor_indexed(self.sim, gymtorch.unwrap_tensor(torch.zeros_like(self._dof_state)), gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
+
+        rand_actions = np.random.uniform(-0.5, 0.5, size=[self.num_envs, self.get_dof_action_size()])
+        rand_actions = to_torch(rand_actions, device=self.device)
+        self.pre_physics_step(rand_actions)
+
+        # step physics and render each frame
+        for i in range(max_steps):
+            self.render()
+            self.gym.simulate(self.sim)
+
+        self._refresh_sim_tensors()
+
+        self._fall_root_states = self._humanoid_root_states.clone()
+        self._fall_root_states[:, 7:13] = 0
+
+        # if flags.im_eval:
+        #     print("im eval fall state!!!!!")
+        #     self._fall_root_states[:, :2] = 0
+        #     if self.zero_out_far and self.zero_out_far_train:
+        #         self._fall_root_states[:, 1] = -3
+
+        self._fall_dof_pos = self._dof_pos.clone()
+        self._fall_dof_vel = torch.zeros_like(self._dof_vel, device=self.device, dtype=torch.float)
+
+        self.availalbe_fall_states[:] = 0
+        self.fall_id_assignments[:] = 0
+
+        return
     
+
     def pause_func(self, action):
         self.paused = not self.paused
         
@@ -757,8 +804,12 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
                 # print()
                 self.diff_obs = get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel)
                 self.phc_obs = compute_imitation_observations_v6(root_pos, root_rot, body_pos_subset, body_rot_subset, body_vel_subset, body_ang_vel_subset, ref_rb_pos_subset, ref_rb_rot_subset, ref_body_vel_subset, ref_body_ang_vel_subset, time_steps, self._has_upright_start)
-
+                
                 self.ref_obs = get_local_ref_obs(root_pos, root_rot, body_pos, ref_rb_pos_subset, ref_rb_rot_subset, ref_body_vel_subset, ref_body_ang_vel_subset)
+
+                self.smp_obs = self._compute_humanoid_obs()
+
+                
                 # temp_obs = torch.zeros_like(obs)
                 # temp_obs[:, 0:diff_obs.shape[1]] = diff_obs
                 # obs = temp_obs.clone() 
@@ -854,7 +905,11 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
 
         root_pos = body_pos[..., 0, :]
         root_rot = body_rot[..., 0, :]
-
+        # TAKARA
+        im_reward, im_reward_raw = compute_imitation_reward(root_pos[ :], root_rot[ :], body_pos[ :], body_rot[:], body_vel[:], body_ang_vel[:], ref_rb_pos[:], ref_rb_rot[:],
+                                                                ref_body_vel[:], ref_body_ang_vel[:], self.reward_specs)
+        self.im_reward_track = im_reward
+        
         if self.zero_out_far:
             transition_distance = 0.25
             distance = torch.norm(root_pos - ref_root_pos, dim=-1)
@@ -867,6 +922,9 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
 
             im_reward, im_reward_raw = compute_imitation_reward(root_pos[~zeros_subset, :], root_rot[~zeros_subset, :], body_pos[~zeros_subset, :], body_rot[~zeros_subset, :], body_vel[~zeros_subset, :], body_ang_vel[~zeros_subset, :], ref_rb_pos[~zeros_subset, :], ref_rb_rot[~zeros_subset, :],
                                                                 ref_body_vel[~zeros_subset, :], ref_body_ang_vel[~zeros_subset, :], self.reward_specs)
+
+            # TAKARA
+            # self.im_reward_track = im_reward
 
             # self.rew_buf, self.reward_raw = self.rew_buf * 0.5, self.reward_raw * 0.5 # Half the reward for the location reward
             self.rew_buf[~zeros_subset] = self.rew_buf[~zeros_subset] + im_reward * 0.5  # for those are inside, add imitation reward
@@ -1085,7 +1143,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
                 if self.cycle_motion_xp:
                     self._global_offset[pass_time_motion_len, :2] = self._humanoid_root_states[pass_time_motion_len, :2] - root_res['root_pos'][:, :2] + torch.rand(pass_time_motion_len.sum(), 2).to(self.device)  # one meter
                 elif self.zero_out_far and self.zero_out_far_train:
-
+                    
                     max_distance = 5
                     num_cycle_motion = pass_time_motion_len.sum()
                     rand_distance = torch.sqrt(torch.rand(num_cycle_motion).to(self.device)) * max_distance
@@ -1299,7 +1357,7 @@ def get_local_obs(root_pos, root_rot, body_pos, body_rot, body_vel, body_ang_vel
     obs = torch.cat(obs, dim=-1).view(B, -1)
 
     return obs
-
+    
 def get_local_ref_obs(root_pos, root_rot, body_pos, ref_body_pos, ref_body_rot, ref_body_vel, ref_body_ang_vel):
  # from scipy.spatial.transform import Rotation as R
     B, J, _ = body_pos.shape  #B is num_envs
@@ -1308,11 +1366,11 @@ def get_local_ref_obs(root_pos, root_rot, body_pos, ref_body_pos, ref_body_rot, 
     heading_inv_rot_expand = heading_inv_rot.unsqueeze(-2).repeat((1, body_pos.shape[1], 1))#.repeat_interleave(time_steps, 0)
  
     # # local body positions
-    
+    # import ipdb; ipdb.set_trace()   
     global_ref_body_pos = ref_body_pos.view(B, 1, J, 3).clone()
     global_ref_body_pos[:,:,:,:2] -= root_pos.unsqueeze(-2).repeat((1, body_pos.shape[1],1)).view(B, 1, J, 3)[:,:,:,:2]
     local_pos = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), body_pos.view(-1, 3))
-
+    
     # local body rotations 
     global_body_rot = ref_body_rot[:, None]
     local_body_rot = torch_utils.quat_mul(heading_inv_rot_expand.view(-1, 4), global_body_rot.view(-1, 4))    
@@ -1328,7 +1386,7 @@ def get_local_ref_obs(root_pos, root_rot, body_pos, ref_body_pos, ref_body_rot, 
     # obs.append(local_ref_body_rot.view(B, 1, -1))  # timestep  * 24 * 6
     # obs = torch.cat(obs, dim=-1).view(B, -1)
     # import ipdb; ipdb.set_trace()
-    
+
     return obs
 
 
@@ -1358,7 +1416,6 @@ def compute_imitation_observations_v6(root_pos, root_rot, body_pos, body_rot, bo
     ##### linear and angular  Velocity differences
     diff_global_vel = ref_body_vel.view(B, time_steps, J, 3) - body_vel.view(B, 1, J, 3)
     diff_local_vel = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_vel.view(-1, 3))
-
 
     diff_global_ang_vel = ref_body_ang_vel.view(B, time_steps, J, 3) - body_ang_vel.view(B, 1, J, 3)
     diff_local_ang_vel = torch_utils.my_quat_rotate(heading_inv_rot_expand.view(-1, 4), diff_global_ang_vel.view(-1, 3))
@@ -1551,7 +1608,7 @@ def compute_imitation_reward(root_pos, root_rot, body_pos, body_rot, body_vel, b
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor,Tensor, Tensor, Dict[str, float]) -> Tuple[Tensor, Tensor]
     k_pos, k_rot, k_vel, k_ang_vel = rwd_specs["k_pos"], rwd_specs["k_rot"], rwd_specs["k_vel"], rwd_specs["k_ang_vel"]
     w_pos, w_rot, w_vel, w_ang_vel = rwd_specs["w_pos"], rwd_specs["w_rot"], rwd_specs["w_vel"], rwd_specs["w_ang_vel"]
-
+    
     # body position reward
     diff_global_body_pos = ref_body_pos - body_pos
     diff_body_pos_dist = (diff_global_body_pos**2).mean(dim=-1).mean(dim=-1)

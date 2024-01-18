@@ -75,7 +75,7 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
                 else:
                     x_all = torch.stack([net(curr_obs) for net in self.actors], dim=1)
                 actions = torch.sum(weights[:, :, None] * x_all, dim=1)
-
+            
             # COLLECTING ACTIONS
             self.mean_action = actions.squeeze().cpu().numpy() 
             # self.noisy_action = torch.normal(mean=actions,std=.03).clone().squeeze().cpu().numpy() # NOISE

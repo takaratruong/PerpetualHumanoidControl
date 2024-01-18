@@ -72,6 +72,9 @@ class BaseTask():
         self.device_id = cfg.get("device_id", 0)
         self.state_record = defaultdict(list)
 
+        # flags.text_input= None
+        self.text_input = None 
+
         self.device = "cpu"
         if self.device_type == "cuda" or self.device_type == "GPU":
             self.device = "cuda" + ":" + str(self.device_id)
@@ -159,6 +162,8 @@ class BaseTask():
             self.gym.subscribe_viewer_keyboard_event(self.viewer, gymapi.KEY_I, "trigger_input")
             self.gym.subscribe_viewer_keyboard_event(self.viewer, gymapi.KEY_P, "show_progress")
             self.gym.subscribe_viewer_keyboard_event(self.viewer, gymapi.KEY_O, "change_color")
+            self.gym.subscribe_viewer_keyboard_event(self.viewer, gymapi.KEY_Z, "new_text_input")
+
 
             self.gym.subscribe_viewer_keyboard_event(self.viewer, gymapi.KEY_SPACE, "PAUSE")
 
@@ -321,8 +326,16 @@ class BaseTask():
             if self.gym.query_viewer_has_closed(self.viewer):
                 sys.exit()
 
+
+            # import ipdb; ipdb.set_trace()
+            #Takara
+            if self.cfg['args'].mode == 'pert': 
+                flags.no_collision_check = True
+
             # check for keyboard events
             for evt in self.gym.query_viewer_action_events(self.viewer):
+
+      
 
                 if evt.action == "QUIT" and evt.value > 0:
                     sys.exit()
@@ -369,17 +382,26 @@ class BaseTask():
                     print("show_traj: ", flags.show_traj) 
                 elif evt.action == "show_progress" and evt.value > 0:
                     print("Progress ", self.progress_buf) 
+
+                # TAKARA 
                 elif evt.action == "apply_force" and evt.value > 0:
                     forces = torch.zeros((1, self._rigid_body_state.shape[0], 3), device=self.device, dtype=torch.float)
                     torques = torch.zeros((1, self._rigid_body_state.shape[0], 3), device=self.device, dtype=torch.float)
                     # forces[:, 8, :] = -800
+                    # import ipdb; ipdb.set_trace()
                     for i in range(self._rigid_body_state.shape[0] // self.num_bodies):
                         forces[:, i * self.num_bodies + 3, :] = -3500
                         forces[:, i * self.num_bodies + 7, :] = -3500
                     # torques[:, 1, :] = 500
 
                     self.gym.apply_rigid_body_force_tensors(self.sim, gymtorch.unwrap_tensor(forces), gymtorch.unwrap_tensor(torques), gymapi.ENV_SPACE)
-                    
+                elif evt.action == "new_text_input" and evt.value > 0:                
+                    # get command from user terminal 
+                    self.text_input = input("Enter command: ")
+                    # import ipdb; ipdb.set_trace()
+
+
+
                 elif evt.action == "prev_env" and evt.value > 0:
                     self.viewing_env_idx = (self.viewing_env_idx - 1) % self.num_envs
                     flags.idx -= 1; print(flags.idx)

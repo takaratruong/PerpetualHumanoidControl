@@ -60,7 +60,8 @@ class HumanoidImGetup(HumanoidIm):
 
         self._recovery_counter = torch.zeros(self.num_envs, device=self.device, dtype=torch.int)
 
-        self._generate_fall_states()
+        #TAKARA
+        # self._generate_fall_states()
 
         return
 
