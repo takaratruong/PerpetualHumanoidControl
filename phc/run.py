@@ -299,6 +299,8 @@ def main():
     algo_observer = RLGPUAlgoObserver()
     # import ipdb; ipdb.set_trace() # TAKARA
     
+
+    # import ipdb; ipdb.set_trace() # TAKARA  
     runner = build_alg_runner(algo_observer)
     runner.load(cfg_train)
     runner.reset()

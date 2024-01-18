@@ -286,9 +286,9 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         # import ipdb; ipdb.set_trace() # Takara
         
-        # obs_store = np.zeros((self.env.num_envs, max_steps, 360)) # 360 for t2m, 576 for phc obs, 648 312 + 
+        obs_store = np.zeros((self.env.num_envs, max_steps, 360)) # 360 for t2m, 576 for phc obs, 648 312 + 
         # obs_store = np.zeros((self.env.num_envs, max_steps, 480)) # for diff obs + ref obs  
-        obs_store = np.zeros((self.env.num_envs, max_steps, 576)) #  for phc obs 
+        # obs_store = np.zeros((self.env.num_envs, max_steps, 576)) #  for phc obs 
         # obs_store = np.zeros((self.env.num_envs, max_steps, 432)) #  for phc obs 
 
         act_store = np.zeros((self.env.num_envs, max_steps, 69)) 
@@ -321,11 +321,11 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.15/10.46.10_t2m_task_obsCond_masked_v1.0/checkpoints/checkpoint_epoch_2000.ckpt'
             # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/14.39.49_t2m_task_v1.4/checkpoints/checkpoint_epoch_1000.ckpt'
             # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/14.39.49_t2m_task_v1.4/checkpoints/checkpoint_epoch_2000.ckpt'
-            checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/14.39.49_t2m_task_v1.4/checkpoints/checkpoint_epoch_1700.ckpt'            
+            # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/14.39.49_t2m_task_v1.4/checkpoints/checkpoint_epoch_200.ckpt'    # best so far, 4obs         
             # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.16/19.38.57_phc_task_v1.5/checkpoints/checkpoint_epoch_1000.ckpt'
 
-            # checkpoint = "/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.17/00.59.30_bm_task/checkpoints/checkpoint_epoch_2000.ckpt"
-
+            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.17/14.00.05_t2m_task_v1.4/checkpoints/checkpoint_epoch_300.ckpt' # 20 obs 
+            
             # load checkpoint       
             payload = torch.load(open(checkpoint, 'rb'), pickle_module=dill)
 
@@ -419,7 +419,9 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     if COLLECT_Z: z = self.get_z(obs_dict)  
 
                     # observation = self.env.task.phc_obs
+                    # import ipdb; ipdb.set_trace() # Takara
                     observation = self.env.task.diff_obs
+
                     # print(self.env.task.diff_obs.shape)
                     # print(self.env.task.ref_obs.shape)
 
@@ -433,8 +435,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
                         self.env.task.use_noisy_action = True
                         
-                        if observation.shape[0] == self.env.num_envs:
-                            obs_store[~done_envs, n,:] = observation[~done_envs,:]
+                        # if observation.shape[0] == self.env.num_envs:
+                        #     obs_store[~done_envs, n,:] = observation[~done_envs,:]
                     
                     if self.mode == 'diff':
                         obs_deque.append(observation)
@@ -458,9 +460,9 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     obs_dict, r, done, info = self.env_step(self.env, action)
 
                     # Collect Action here. The env_step goes from the heirarchical action to the actual torque, which we capture.  
-                    if self.mode in ['collect', 'pert']:      
-                        if self.env.task.mean_action.shape[0] == self.env.num_envs:
-                            act_store[~done_envs, n,:] = self.env.task.mean_action[~done_envs,:]
+                    # if self.mode in ['collect', 'pert']:      
+                    #     if self.env.task.mean_action.shape[0] == self.env.num_envs:
+                    #         act_store[~done_envs, n,:] = self.env.task.mean_action[~done_envs,:]
 
                     cr += r
                     steps += 1

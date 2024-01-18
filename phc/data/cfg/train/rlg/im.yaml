@@ -59,9 +59,9 @@ params:
     learning_rate: 2e-5
     lr_schedule: constant
     score_to_win: 20000
-    max_epochs: 10000000
-    save_best_after: 100
-    save_frequency: 2500
+    max_epochs: 100000
+    save_best_after: 200
+    save_frequency: 200
     print_stats: False
     save_intermediate: True
     entropy_coef: 0.0
@@ -70,17 +70,17 @@ params:
     ppo: True
     e_clip: 0.2
     horizon_length: 32
-    minibatch_size: 16384
+    minibatch_size: 400 # 512 #16384
     mini_epochs: 6
     critic_coef: 5
     clip_value: False
     
     bounds_loss_coef: 10
-    amp_obs_demo_buffer_size: 200000
-    amp_replay_buffer_size: 200000
+    amp_obs_demo_buffer_size: 20000
+    amp_replay_buffer_size: 20000
     amp_replay_keep_prob: 0.01
     amp_batch_size: 512
-    amp_minibatch_size: 4096
+    amp_minibatch_size: 100 #4096
     disc_coef: 5
     disc_logit_reg: 0.01
     disc_grad_penalty: 5
@@ -88,8 +88,8 @@ params:
     disc_weight_decay: 0.0001
     normalize_amp_input: True
 
-    task_reward_w: 0.5
-    disc_reward_w: 0.5
+    task_reward_w: .5 #1
+    disc_reward_w: .50 #0.5
 
     player: 
       games_num: 50000000
