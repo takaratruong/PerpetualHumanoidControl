@@ -4,6 +4,7 @@ import dill
 import glob
 import os
 import sys
+import re
 import pdb
 import random
 import os.path as osp
@@ -32,11 +33,11 @@ import clip
 # sys.path.insert(0,'/move/u/takaraet/motion_mimic')
 # from algs.diff_policy import DiffusionPolicy
 
-# sys.path.insert(0,'/move/u/takaraet/diffusion_policy')
+#sys.path.insert(0,'/move/u/takaraet/diffusion_policy')
 # from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
-sys.path.insert(0,'/move/u/takaraet/my_diffusion_policy')
-# sys.path.insert(0,'/move/u/mpiseno/src/my_diffusion_policy')
+#sys.path.insert(0,'/move/u/takaraet/my_diffusion_policy')
+sys.path.insert(0,'/move/u/mpiseno/src/my_diffusion_policy')
 
 from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
@@ -68,9 +69,14 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         # Michael ==
         self.mode = config['mode'] # Set mode ('collect' or 'diff' from command line)
-        if self.mode == 'diff':
+        if self.mode == 'diff' or self.mode == 'eval':
+            assert config['ckpt_path'] is not None
+            self.ckpt_path = config['ckpt_path']
+            self.ckpt_version = re.search(r'v\d\.\d', self.ckpt_path).group()
+            self.ckpt_epoch = int(re.search(r'\d*\.ckpt', self.ckpt_path).group()[:-len('.ckpt')])
             self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
             self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
+            self.data_split = re.search(r'(train|val|test){1}\.npz', self.m2t_map_path).group()[:-len('.npz')]
 
         self.collect_start_idx = config['collect_start_idx'] # Starting index for collecting data
         self.collect_step_idx = config['collect_step_idx'] # how much the collect index increases by each time
@@ -112,7 +118,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             termination_state = info["terminate"]
             # self._motion_lib = humanoid_env._motion_lib
 
-            max_steps = 150
+            if self.mode == 'diff':
+                max_steps = 150
+            elif self.mode == 'eval':
+                max_steps = 250
 
             self.terminate_state = torch.logical_or(termination_state, self.terminate_state)
             if (~self.terminate_state).sum() > 0:
@@ -179,7 +188,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 if (humanoid_env.start_idx + humanoid_env.num_envs >= num_evals):
                     print('FINAL SUCCESS RATE', self.success_rate)
                     print(f'Failed texts: {self.failed_texts}')
-                    exit() 
+                    if self.mode == 'diff':
+                        exit() 
                     
                     # terminate_hist = np.concatenate(self.terminate_memory)
                     # succ_idxes = np.nonzero(~terminate_hist[: num_evals])[0].tolist()
@@ -231,7 +241,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     # print("....")
 
                 done[:] = 1  # Turning all of the sequences done and reset for the next batch of eval.
-                humanoid_env.forward_motion_samples()
+                #humanoid_env.forward_motion_samples()
                 self.terminate_state = torch.zeros(
                     self.env.task.num_envs, device=self.device
                 )
@@ -310,77 +320,11 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             raise Exception('Invalid obs_type')
         
         act_store = np.zeros((self.env.num_envs, max_steps, 69)) 
-        done_envs = np.zeros(self.env.num_envs,dtype=bool)
+        done_envs = np.zeros(self.env.num_envs,dtype=bool)            
         
-        if self.mode == 'diff':
-            
-            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.28.30_noise_only_final/checkpoints/epoch=7500-train_action_mse_error=0.002.ckpt'
-            
-            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/10.57.53_noise_debug_h1/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.54.37_clean_only/checkpoints/epoch=7700-train_action_mse_error=0.003.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/14.07.31_action_masked_nob2/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/17.42.47_noise-clean_debug_shuffle/checkpoints/epoch=7800-train_action_mse_error=0.001.ckpt'
-            # checkpoint = "/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/01.28.30_noise_only_final/checkpoints/epoch=7500-train_action_mse_error=0.002.ckpt"
-
-#             checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.09/14.07.31_action_masked_nob2/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.39.18_walking-diffpol_v0.3/checkpoints/'
-#             # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.39.39_walking-diffpol_v0.4/checkpoints/'
-#             # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.40.14_walking-diffpol_v0.5/checkpoints/epoch=7800-train_action_mse_error=0.006.ckpt'
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/00.40.14_walking-diffpol_v0.6/checkpoints/epoch=7850-train_action_mse_error=0.004.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/09.57.52_v6_fixed/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/14.01.21_combined_batch_test/checkpoints/latest.ckpt'
-            
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/10.48.36_noisy_mask_fixed/checkpoints/latest.ckpt' #.76
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/14.43.23_cond_layers2/checkpoints/epoch=7650-train_action_mse_error=0.001.ckpt' #.8 
-            
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/16.18.42_cond_layers2_noText/checkpoints/epoch=7600-train_action_mse_error=0.001.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/18.24.51_phc_obs/checkpoints/latest.ckpt' 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/19.47.44_phc_obs/checkpoints/latest.ckpt' # 2obs
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/20.41.28_phc_obs_hor1/checkpoints/latest.ckpt'
-
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/21.20.41_phc_obs_hor1/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/21.33.04_diff_ref/checkpoints/latest.ckpt'
-
-            # noise level exp
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.30.40_walking-diffpol_v0.6/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt' #.099
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.30.40_walking-diffpol_v0.5/checkpoints/epoch=7750-train_action_mse_error=0.003.ckpt'
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.29.50_walking-diffpol_v0.4/checkpoints/epoch=7950-train_action_mse_error=0.002.ckpt'
-            # checkpoint = '/move/u/mpiseno/src/my_diffusion_policy/data/outputs/2024.01.10/16.26.32_walking-diffpol_v0.3/checkpoints/epoch=6850-train_action_mse_error=0.002.ckpt' #.06
-            # checkpoint ='/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.10/23.24.29_v3/checkpoints/epoch=7950-train_action_mse_error=0.001.ckpt'
-            
-            #debug exps
-            # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/06.39.49_batch2048/checkpoints/latest.ckpt' #3300
-            # checkpoint= '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/06.51.11_v1.3_2048/checkpoints/latest.ckpt' #3300
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/07.10.40_v1.3_2048_0-200_cpy1/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/07.34.04_v.3_2048/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/epoch=0800-train_action_mse_error=0.004 (copy).ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.03.48_v1.3_2048_0-200_cpy4/checkpoints/epoch=1800-train_action_mse_error=0.003.ckpt'
-            
-            # PHC Task 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/08.46.29_v2.0/checkpoints/latest.ckpt' #tracking
-            
-            # Ref and motion conditioned 
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/10.39.35_v3.0_diffref/checkpoints/latest.ckpt'
-            # checkpoint ='/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/11.08.15_v3.0_diffref_masked/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/11.30.24_v3.0_diffref_masked/checkpoints/latest.ckpt'
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/16.40.28_v3.1_diffref_refGlobal_fixMasked/checkpoints/latest.ckpt'
-
-            # checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/17.22.39_v3.1_diffref_refLocal_maskApplied/checkpoints/latest.ckpt'
-            
-            checkpoint = '/move/u/takaraet/my_diffusion_policy/data/outputs/2024.01.11/18.28.40_v3.2_test/checkpoints/latest.ckpt'
-
+        if self.mode == 'diff' or self.mode == 'eval':
             # load checkpoint       
-            payload = torch.load(open(checkpoint, 'rb'), pickle_module=dill)
+            payload = torch.load(open(self.ckpt_path, 'rb'), pickle_module=dill)
 
             hydra_cfg = payload['cfg']
             cls = hydra.utils.get_class(hydra_cfg._target_)
@@ -418,7 +362,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 break
             obs_dict = self.env_reset()
 
-            if self.mode == 'diff':
+            if self.mode == 'diff' or self.mode == 'eval':
                 # import ipdb; ipdb.set_trace() # Takara
 
                 # obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs*0))] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
@@ -442,6 +386,15 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     text_embed = encode_text(hardcoded_text, clip_model)
                     text_embeds = text_embed.repeat(self.env.num_envs, 1)
                     print(f'Hardcoded text: {hardcoded_text}')
+            elif self.mode == 'eval':
+                hardcoded_text = None
+                text_embeds, sampled_texts = sample_text_embeds_for_eval(
+                    self.env.num_envs,
+                    self.m2t_map, 
+                    self.motion_lib.curr_motion_keys,
+                    clip_model
+                )
+                print(f'Sampled texts: {sampled_texts}')
 
             batch_size = 1
             batch_size = self.get_batch_size(obs_dict["obs"], batch_size)
@@ -461,18 +414,19 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             self.failed_texts = set()
             with torch.no_grad():       
 
-                for n in range(self.max_steps): # TAKARA EDIT 
-                    obs_dict = self.env_reset(done_indices)
+                for n in range(self.max_steps): # TAKARA EDIT
+                    #obs_dict = self.env_reset(done_indices)
                     if COLLECT_Z: z = self.get_z(obs_dict)  
                     
                     if self.obs_type == 't2m':
+                        #self.env.task._compute_task_obs() # Michael
                         observation = self.env.task.diff_obs    
                     elif self.obs_type == 'phc':
                         observation = self.env.task.phc_obs
                     else:
                         raise Exception('Invalid obs_type')
                     
-                    # print(self.env.task.diff_obs.shape)
+                    # printdone_indices
                     # print(self.env.task.ref_obs.shape)
                     # observation = np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))
                     
@@ -491,7 +445,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             # obs_store[~done_envs, index_store[~done_envs]-1,:] = observation[~done_envs,:]
                             obs_store[~done_envs, n,:] = observation[~done_envs,:]
                     
-                    if self.mode == 'diff':
+                    if self.mode == 'diff' or self.mode == 'eval':
                         obs_deque.append(observation)
 
                         clean_traj = torch.ones(self.env.num_envs)
@@ -501,6 +455,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         )
 
                         action = action_dict['action'][:,0,:] # if horizon =1 then use action_pred
+                        
+                        if self.mode == 'eval':
+                            assert self.env.num_envs == observation.shape[0]
+                            obs_store[~done_envs, n, :] = observation[~done_envs, :]
                     
                     # Step the environment 
                     obs_dict, r, done, info = self.env_step(self.env, action)
@@ -513,7 +471,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             act_store[~done_envs, n,:] = self.env.task.mean_action[~done_envs,:]
 
                     cr += r
-                    steps += 1
+                    steps[~done_envs] += 1
 
                     # Record failed language prompts
                     # if self.mode == 'diff' and self.terminate_state.sum() > 0:
@@ -576,37 +534,56 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             exit_code = int(failed != '')
                             exit(exit_code)
                             # Data saved 
+                    elif self.mode == 'eval':
+                        if done_envs.all():
+                            print(f'GOT TO END OF EVAL')
+                            data_dir = f'eval_data/{self.ckpt_version}_{self.data_split}/ckpt={self.ckpt_epoch}'
+                            pathlib.Path(data_dir).mkdir(parents=True, exist_ok=True)
+                            end_idx = self.collect_start_idx + self.collect_step_idx
+                            data_fname = f'data_{self.collect_start_idx}-{end_idx}.npz'
+                            data_path = os.path.join(data_dir, data_fname)
+                            np.savez(
+                                data_path,
+                                obs=obs_store, act=act_store,
+                                #ep_len=steps.cpu().numpy(),
+                                ep_len=self.motion_lib.get_motion_num_steps().cpu().numpy(), # Keep track of original ep_len
+                                ep_name=self.motion_lib.curr_motion_keys
+                            )
+
+                            print(f'Saved data to {data_path}')
+                            exit()
+                            # Data saved
 
                     if done_count > 0:
-                        if self.is_rnn:
-                            for s in self.states:
-                                s[:, all_done_indices, :] = (
-                                    s[:, all_done_indices, :] * 0.0
-                                )
+                        # if self.is_rnn:
+                        #     for s in self.states:
+                        #         s[:, all_done_indices, :] = (
+                        #             s[:, all_done_indices, :] * 0.0
+                        #         )
 
-                        cur_rewards = cr[done_indices].sum().item()
-                        cur_steps = steps[done_indices].sum().item()
+                        # cur_rewards = cr[done_indices].sum().item()
+                        # cur_steps = steps[done_indices].sum().item()
 
-                        cr = cr * (1.0 - done.float())
-                        steps = steps * (1.0 - done.float())
-                        sum_rewards += cur_rewards
-                        sum_steps += cur_steps
+                        # cr = cr * (1.0 - done.float())
+                        # #steps = steps * (1.0 - done.float())
+                        # sum_rewards += cur_rewards
+                        # sum_steps += cur_steps
 
-                        game_res = 0.0
-                        if isinstance(info, dict):
-                            if "battle_won" in info:
-                                print_game_res = True
-                                game_res = info.get("battle_won", 0.5)
-                            if "scores" in info:
-                                print_game_res = True
-                                game_res = info.get("scores", 0.5)
-                        if self.print_stats:
-                            if print_game_res:
-                                print("reward:", cur_rewards / done_count, "steps:", cur_steps / done_count, "w:", game_res,)
-                            else:
-                                print("reward:", cur_rewards / done_count, "steps:", cur_steps / done_count,)
+                        # game_res = 0.0
+                        # if isinstance(info, dict):
+                        #     if "battle_won" in info:
+                        #         print_game_res = True
+                        #         game_res = info.get("battle_won", 0.5)
+                        #     if "scores" in info:
+                        #         print_game_res = True
+                        #         game_res = info.get("scores", 0.5)
+                        # if self.print_stats:
+                        #     if print_game_res:
+                        #         print("reward:", cur_rewards / done_count, "steps:", cur_steps / done_count, "w:", game_res,)
+                        #     else:
+                        #         print("reward:", cur_rewards / done_count, "steps:", cur_steps / done_count,)
 
-                        sum_game_res += game_res
+                        #sum_game_res += game_res
                         # if batch_size//self.num_agents == 1 or games_played >= n_games:
                         if games_played >= n_games:
                             break
@@ -633,6 +610,30 @@ def sample_text_embeds(num_samples, m2t_map, clip_model):
     texts = []
     for _ in range(num_samples):
         motion_file = random.choice(list(m2t_map.keys()))
+        raw_text = m2t_map[motion_file]
+        text = clean_raw_text(raw_text)
+        text_embed = encode_text(text, clip_model)
+        text_embeds.append(text_embed)
+        texts.append(text)
+
+    text_embeds = np.vstack(text_embeds) 
+    texts = np.array(texts)
+    return text_embeds, texts
+
+
+def sample_text_embeds_for_eval(num_samples, m2t_map, motion_keys, clip_model):
+    '''
+    Different from sample_text_embeds because we sample texts from motion keys instead of 
+    just from the m2t_amp
+    '''
+    text_embeds = []
+    texts = []
+    assert num_samples == len(motion_keys) # Make sure number of environemtns is the same as number of motions
+    for idx in range(len(motion_keys)):
+        motion_file = motion_keys[idx]
+        if '0-' in motion_file:
+            motion_file = motion_file.replace('0-', '')
+
         raw_text = m2t_map[motion_file]
         text = clean_raw_text(raw_text)
         text_embed = encode_text(text, clip_model)

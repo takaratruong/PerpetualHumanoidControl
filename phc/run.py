@@ -65,12 +65,12 @@ from learning import amp_network_pnn_builder
 
 from env.tasks import humanoid_amp_task
 
-args = None
-cfg = None
-cfg_train = None
+# args = None
+# cfg = None
+# cfg_train = None
 
 
-def create_rlgpu_env(**kwargs):
+def create_rlgpu_env(args, cfg, cfg_train, **kwargs):
     use_horovod = cfg_train['params']['config'].get('multi_gpu', False)
     if use_horovod:
         import horovod.torch as hvd
@@ -194,8 +194,8 @@ class RLGPUEnv(vecenv.IVecEnv):
         return info
 
 
-vecenv.register('RLGPU', lambda config_name, num_actors, **kwargs: RLGPUEnv(config_name, num_actors, **kwargs))
-env_configurations.register('rlgpu', {'env_creator': lambda **kwargs: create_rlgpu_env(**kwargs), 'vecenv_type': 'RLGPU'})
+# vecenv.register('RLGPU', lambda config_name, num_actors, **kwargs: RLGPUEnv(config_name, num_actors, **kwargs))
+# env_configurations.register('rlgpu', {'env_creator': lambda **kwargs: create_rlgpu_env(**kwargs), 'vecenv_type': 'RLGPU'})
 
 
 def build_alg_runner(algo_observer):
@@ -218,17 +218,22 @@ def build_alg_runner(algo_observer):
     return runner
 
 
-def main():
-    global args
-    global cfg
-    global cfg_train
+def main(args):
+    # global args
+    # global cfg
+    # global cfg_train
 
     set_np_formatting()
-    args = get_args()
+    #args = get_args()
     cfg_env_name = args.cfg_env.split("/")[-1].split(".")[0]
 
     args.logdir = args.network_path
     cfg, cfg_train, logdir = load_cfg(args)
+
+    vecenv.register('RLGPU', lambda config_name, num_actors, **kwargs: RLGPUEnv(config_name, num_actors, **kwargs))
+    env_configurations.register('rlgpu', {'env_creator': lambda **kwargs: create_rlgpu_env(args, cfg, cfg_train,**kwargs), 'vecenv_type': 'RLGPU'})
+
+
     flags.debug, flags.follow, flags.fixed, flags.divide_group, flags.no_collision_check, flags.fixed_path, flags.real_path, flags.small_terrain, flags.show_traj, flags.server_mode, flags.slow, flags.real_traj, flags.im_eval, flags.no_virtual_display, flags.render_o3d = \
         args.debug, args.follow, False, False, False, False, False, args.small_terrain, True, args.server_mode, False, False, args.im_eval, args.no_virtual_display, args.render_o3d
 
@@ -299,10 +304,13 @@ def main():
     cfg['env']['act_noise'] = vargs['act_noise']
     cfg['env']['collect_start_idx'] = vargs['collect_start_idx']
     cfg['env']['collect_step_idx'] = vargs['collect_step_idx']
+    cfg['env']['m2t_map_path'] = vargs['m2t_map_path']
+    cfg['env']['mode'] = vargs['mode']
     cfg_train['params']['config']['collect_start_idx'] = vargs['collect_start_idx']
     cfg_train['params']['config']['collect_step_idx'] = vargs['collect_step_idx']
     cfg_train['params']['config']['act_noise'] = vargs['act_noise']
     cfg_train['params']['config']['obs_type'] = vargs['obs_type']
+    cfg_train['params']['config']['ckpt_path'] = vargs['ckpt_path']
     # === 
     # import ipdb; ipdb.set_trace() # TAKARA
     
@@ -312,7 +320,6 @@ def main():
     runner.load(cfg_train)
     runner.reset()
     runner.run(vargs)
-    
     return
 
 
@@ -323,4 +330,4 @@ def seed_all(seed):
     np.random.seed(seed)
 
 if __name__ == '__main__':
-    main()
+    main(get_args())

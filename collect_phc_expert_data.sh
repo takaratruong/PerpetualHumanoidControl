@@ -26,7 +26,7 @@ max_idxs=3628 # Number of motions in the motion lib
 collect_start_idx=0
 collect_step_idx=50
 obs_type="t2m"
-act_noise=0.0
+act_noise=0.1
 
 
 run_collection () {

@@ -456,7 +456,7 @@ def get_args(benchmark=False):
             "default": None,
             "required": True,
             "type": str,
-            "choices": ['collect', 'diff'],
+            "choices": ['collect', 'diff', 'eval'],
             "Help": "choose 'collect' or 'diff'"
         },
         {
@@ -479,6 +479,10 @@ def get_args(benchmark=False):
             "default": 'phc',
             "type": str,
             'choices': ['phc', 't2m']
+        },
+        {
+            "name": "--ckpt_path",
+            "type": str,
         },
     ]
 

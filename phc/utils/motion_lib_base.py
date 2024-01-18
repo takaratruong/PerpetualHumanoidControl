@@ -114,19 +114,29 @@ class MotionlibMode(Enum):
 class MotionLibBase():
 
     def __init__(self, motion_file,  device, fix_height=FixHeightMode.full_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True,
-    collect_start_idx=0, collect_step_idx=None
+    collect_start_idx=0, collect_step_idx=None,
+    m2t_map_path=None, mode=None
     ):
         self._device = device
         self.mesh_parsers = None
 
-        # MICHAEL
+        # MICHAEL===
         self.collect_start_idx = collect_start_idx
         self.collect_step_idx = collect_step_idx
+        assert mode is not None
+        self.mode_ = mode
         assert self.collect_step_idx is not None
         print(f'Collection start idx: {self.collect_start_idx}')
+        if self.mode_ == 'eval':
+            self.m2t_map_path = m2t_map_path
+            self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
+    
+        # ===
         
         self.load_data(motion_file,  min_length = min_length, im_eval = im_eval)
         self.setup_constants(fix_height = fix_height, masterfoot_conifg = masterfoot_conifg, multi_thread = multi_thread)
+
+        
 
         if flags.real_traj:
             if self._masterfoot_conifg is None:
@@ -269,27 +279,27 @@ class MotionLibBase():
         # # import ipdb; ipdb.set_trace()   
         #np.random.seed(0)
 
-        all_names = np.load('motion_names_KIT.npy')
-        all_names = set(all_names)
-        assert all([key[len('0-'):] in all_names for key in self._motion_data_keys])  
-
+        if self.mode_ == 'eval':
+            print(f'EVAL MODE: Building map to motion_names!')
+            eval_idxs = []
+            for name in self.m2t_map.keys():
+                idx = np.where(self._motion_data_keys == '0-'+name)[0][0]
+                eval_idxs.append(idx)
+            
+            eval_idxs = np.array(sorted(eval_idxs))
+            print(f'Number of eval keys: {len(eval_idxs)}')
+        
         print(f'Number of motion keys: {len(self._motion_data_keys)}')
 
         start_idx = self.collect_start_idx
-        end_idx = min(start_idx + self.collect_step_idx, len(self._motion_data_keys))
-        #num_motions = 50
-        #num_duplicates = 1
+        if self.mode_ == 'eval':
+            end_idx = min(start_idx + self.collect_step_idx, len(eval_idxs))
+            sample_idxes = np.arange(start_idx, end_idx)
+            sample_idxes = eval_idxs[sample_idxes]
+        else:
+            end_idx = min(start_idx + self.collect_step_idx, len(self._motion_data_keys))
+            sample_idxes = np.arange(start_idx, end_idx)
 
-        # shuffled_idxs = np.load('idxs_amass_copycat_take5_train.npy')
-        # assert len(shuffled_idxs) == len(self._motion_data_keys)
-
-        # train_split_idx = int(0.85 * len(shuffled_idxs))
-        # shuffled_idxs = shuffled_idxs[:train_split_idx]
-
-        # val_split_idx = int(0.90 * len(shuffled_idxs))
-        # shuffled_idxs = shuffled_idxs[train_split_idx:val_split_idx]
-
-        sample_idxes = np.arange(start_idx, end_idx)
         #sample_idxes = shuffled_idxs[sample_idxes] # permuation of motion data keys
         sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
 
