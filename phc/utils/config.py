@@ -478,7 +478,7 @@ def get_args(benchmark=False):
             "name": "--obs_type",
             "default": 'phc',
             "type": str,
-            'choices': ['phc', 't2m']
+            'choices': ['phc', 't2m', 'ref']
         },
         {
             "name": "--ckpt_path",

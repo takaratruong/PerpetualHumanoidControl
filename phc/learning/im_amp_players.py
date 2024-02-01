@@ -35,8 +35,8 @@ import clip
 #sys.path.insert(0,'/move/u/takaraet/diffusion_policy')
 # from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
-sys.path.insert(0,'/move/u/takaraet/my_diffusion_policy')
-# sys.path.insert(0,'/move/u/mpiseno/src/my_diffusion_policy')
+#sys.path.insert(0,'/move/u/mpiseno/src/my_diffusion_policy')
+sys.path.insert(0,'/move/u/mpiseno/src/my_diffusion_policy')
 
 from diffusion_policy.workspace.base_workspace import BaseWorkspace
 
@@ -69,6 +69,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         self.curr_stpes = 0
 
         # Michael ==
+        self.obs_type = config['obs_type']
         self.mode = config['mode'] # Set mode ('collect' or 'diff' from command line)
         if self.mode == 'diff' or self.mode == 'eval':
             assert config['ckpt_path'] is not None
@@ -79,18 +80,18 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             # self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
             # self.data_split = re.search(r'(train|val|test){1}\.npz', self.m2t_map_path).group()[:-len('.npz')]
             
-            self.ckpt_version = 0 #re.search(r'v\d\.\d', self.ckpt_path).group()
-            self.ckpt_epoch = 0#int(re.search(r'\d*\.ckpt', self.ckpt_path).group()[:-len('.ckpt')])
+            self.ckpt_version = re.search(r'v\d\.\d', self.ckpt_path).group()
+            self.ckpt_epoch = int(re.search(r'\d*\.ckpt', self.ckpt_path).group()[:-len('.ckpt')])
             self.m2t_map_path = config['m2t_map_path'] # Path to the " motion fname to text" map
             self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
-            self.data_split = 'train' # re.search(r'(train|val|test){1}\.npz', self.m2t_map_path).group()[:-len('.npz')]
+            self.data_split = re.search(r'(train|val|test){1}\.npz', self.m2t_map_path).group()[:-len('.npz')]
 
 
 
         self.collect_start_idx = config['collect_start_idx'] # Starting index for collecting data
         self.collect_step_idx = config['collect_step_idx'] # how much the collect index increases by each time
         self.act_noise = config['act_noise'] # Action noise level
-        self.obs_type = config['obs_type']
+        
         # ==
         
         if COLLECT_Z:
@@ -138,33 +139,39 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 max_steps =  humanoid_env._motion_lib.get_motion_num_steps().max() #250 for eval t2m 
 
             self.terminate_state = torch.logical_or(termination_state, self.terminate_state)
-            # self.terminate_state_eval = torch.logical_or(termination_state, self.terminate_state_eval) 
+            # if (~self.terminate_state).sum() > 0:
+            #     max_possible_id = humanoid_env._motion_lib._num_unique_motions - 1
+            #     curr_ids = humanoid_env._motion_lib._curr_motion_ids
+            #     # if (max_possible_id == curr_ids).sum() > 0: # When you are running out of motions. 
+            #     #     bound = (max_possible_id == curr_ids).nonzero()[0] + 1
+            #     #     if (~self.terminate_state[:bound]).sum() > 0:
+            #     #         if self.mode == 'collect':
+            #     #             humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
+            #     #         else:
+            #     #             curr_max = max_steps # humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
+            #     #     else:
+            #     #         curr_max = (self.curr_stpes - 1)  # the ones that should be counted have teimrated
+            #     # else:
+            #     if True:
+            #         if self.mode == 'collect':
+            #             curr_max = humanoid_env._motion_lib.get_motion_num_steps()[~self.terminate_state].max()
+            #         else:
+            #             curr_max = max_steps #humanoid_env._motion_lib.get_motion_num_steps()[~self.terminate_state].max()
 
-            if (~self.terminate_state).sum() > 0:
-                max_possible_id = humanoid_env._motion_lib._num_unique_motions - 1
-                curr_ids = humanoid_env._motion_lib._curr_motion_ids
-                # if (max_possible_id == curr_ids).sum() > 0: # When you are running out of motions. 
-                #     bound = (max_possible_id == curr_ids).nonzero()[0] + 1
-                #     if (~self.terminate_state[:bound]).sum() > 0:
-                #         if self.mode == 'collect':
-                #             humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
-                #         else:
-                #             curr_max = max_steps # humanoid_env._motion_lib.get_motion_num_steps()[:bound][~self.terminate_state[:bound]].max()
-                #     else:
-                #         curr_max = (self.curr_stpes - 1)  # the ones that should be counted have teimrated
-                # else:
-                if True: # Michael - keeping indentation of previous code
-                    if self.mode == 'collect':
-                        curr_max = humanoid_env._motion_lib.get_motion_num_steps()[~self.terminate_state].max()
-                    else:
-                        curr_max = max_steps #humanoid_env._motion_lib.get_motion_num_steps()[~self.terminate_state].max()
+            #     if self.curr_stpes >= curr_max: curr_max = self.curr_stpes + 1  # For matching up the current steps and max steps. 
+            # else:
+            #     if self.mode == 'collect':
+            #         curr_max = humanoid_env._motion_lib.get_motion_num_steps().max()
+            #     else:
+            #         curr_max = max_steps #humanoid_env._motion_lib.get_motion_num_steps().max()
 
-                if self.curr_stpes >= curr_max: curr_max = self.curr_stpes + 1  # For matching up the current steps and max steps. 
+            if (
+                self.mode == 'collect' or
+                (self.mode == 'eval' and self.obs_type == 'phc')
+            ):
+                curr_max = humanoid_env._motion_lib.get_motion_num_steps().max()
             else:
-                if self.mode == 'collect':
-                    curr_max = humanoid_env._motion_lib.get_motion_num_steps().max()
-                else:
-                    curr_max = max_steps #humanoid_env._motion_lib.get_motion_num_steps().max()
+                curr_max = max_steps
 
             self.mpjpe.append(info["mpjpe"])
             self.gt_pos.append(info["body_pos_gt"])
@@ -174,7 +181,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             
             if self.curr_stpes >= curr_max or self.terminate_state.sum() == humanoid_env.num_envs:
                 self.terminate_memory.append(self.terminate_state.cpu().numpy())
-                self.success_rate = (1 - np.concatenate(self.terminate_memory)[: humanoid_env._motion_lib._num_unique_motions].mean())
+                #self.success_rate = (1 - np.concatenate(self.terminate_memory)[: humanoid_env._motion_lib._num_unique_motions].mean())
+                self.success_rate = (1 - np.concatenate(self.terminate_memory).mean())
 
                 # MPJPE
                 all_mpjpe = torch.stack(self.mpjpe)
@@ -190,71 +198,71 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 all_body_pos_gt = np.stack(self.gt_pos)
                 all_body_pos_gt = [all_body_pos_gt[: (i - 1), idx] for idx, i in enumerate(humanoid_env._motion_lib.get_motion_num_steps())]
 
-                if COLLECT_Z:
-                    all_zs = torch.stack(self.zs)
-                    all_zs = [all_zs[: (i - 1), idx] for idx, i in enumerate(humanoid_env._motion_lib.get_motion_num_steps())]
-                    self.zs_all += all_zs
-
-
                 self.mpjpe_all.append(all_mpjpe)
                 self.pred_pos_all += all_body_pos_pred
                 self.gt_pos_all += all_body_pos_gt
 
-                num_evals = 10
-                if (humanoid_env.start_idx + humanoid_env.num_envs >= num_evals):
+                #num_evals = 10
+                #if (humanoid_env.start_idx + humanoid_env.num_envs >= num_evals):
+                if True:
                     print('FINAL SUCCESS RATE', self.success_rate)
-                    print(f'Failed texts: {self.failed_texts}')
-                    if self.mode == 'diff':
-                        exit() 
+                    if self.mode == 'diff' or self.mode == 'eval':
+                        if self.obs_type != 'phc':
+                            exit()
                     
-                    # terminate_hist = np.concatenate(self.terminate_memory)
-                    # succ_idxes = np.nonzero(~terminate_hist[: num_evals])[0].tolist()
+                    terminate_hist = np.concatenate(self.terminate_memory)
+                    #succ_idxes = np.nonzero(~terminate_hist[:num_evals])[0].tolist()
+                    succ_idxes = np.nonzero(~terminate_hist)[0].tolist()
 
                     # pred_pos_all_succ = [(self.pred_pos_all[:num_evals])[i] for i in succ_idxes]
                     # gt_pos_all_succ = [(self.gt_pos_all[:num_evals])[i] for i in succ_idxes]
+                    pred_pos_all_succ = [(self.pred_pos_all)[i] for i in succ_idxes]
+                    gt_pos_all_succ = [(self.gt_pos_all)[i] for i in succ_idxes]
 
                     # pred_pos_all = self.pred_pos_all[:num_evals]
                     # gt_pos_all = self.gt_pos_all[:num_evals]
+                    pred_pos_all = self.pred_pos_all
+                    gt_pos_all = self.gt_pos_all
 
-                    # # np.sum([i.shape[0] for i in self.pred_pos_all[:humanoid_env._motion_lib._num_unique_motions]])
-                    # # humanoid_env._motion_lib.get_motion_num_steps().sum()
+                    # np.sum([i.shape[0] for i in self.pred_pos_all[:humanoid_env._motion_lib._num_unique_motions]])
+                    # humanoid_env._motion_lib.get_motion_num_steps().sum()
 
                     # failed_keys = humanoid_env._motion_lib._motion_data_keys[terminate_hist[: num_evals]]
                     # success_keys = humanoid_env._motion_lib._motion_data_keys[~terminate_hist[: num_evals]]
-                    # # print("failed", humanoid_env._motion_lib._motion_data_keys[np.concatenate(self.terminate_memory)[:humanoid_env._motion_lib._num_unique_motions]])
+
+                    # print("failed", humanoid_env._motion_lib._motion_data_keys[np.concatenate(self.terminate_memory)[:humanoid_env._motion_lib._num_unique_motions]])
                     # if flags.real_traj:
                     #     pred_pos_all = [i[:, humanoid_env._reset_bodies_id] for i in pred_pos_all]
                     #     gt_pos_all = [i[:, humanoid_env._reset_bodies_id] for i in gt_pos_all]
                     #     pred_pos_all_succ = [i[:, humanoid_env._reset_bodies_id] for i in pred_pos_all_succ]
                     #     gt_pos_all_succ = [i[:, humanoid_env._reset_bodies_id] for i in gt_pos_all_succ]
                         
-                        
-                        
-                    # metrics = compute_metrics_lite(pred_pos_all, gt_pos_all)
-                    # metrics_succ = compute_metrics_lite(pred_pos_all_succ, gt_pos_all_succ)
+                    metrics = compute_metrics_lite(pred_pos_all, gt_pos_all, concatenate=False, object_arr=True)
+                    metrics_succ = compute_metrics_lite(pred_pos_all_succ, gt_pos_all_succ)
 
-                    # metrics_all_print = {m: np.mean(v) for m, v in metrics.items()}
-                    # metrics_print = {m: np.mean(v) for m, v in metrics_succ.items()}
+                    #metrics_all_print = {m: np.mean(v) for m, v in metrics.items()}
+                    metrics_print = {m: np.mean(v) for m, v in metrics_succ.items()}
 
-                    # print("------------------------------------------")
-                    # print("------------------------------------------")
-                    # print(f"Success Rate: {self.success_rate:.10f}")
-                    # print("All: ", " \t".join([f"{k}: {v:.3f}" for k, v in metrics_all_print.items()]))
-                    # print("Succ: "," \t".join([f"{k}: {v:.3f}" for k, v in metrics_print.items()]))
-                    # # print(1 - self.terminate_state.sum() / self.terminate_state.shape[0])
-                    # print(self.config['network_path'])
-                    # if COLLECT_Z:
-                    #     zs_all = self.zs_all[:humanoid_env._motion_lib._num_unique_motions]
-                    #     zs_dump = {k: zs_all[idx].cpu().numpy() for idx, k in enumerate(humanoid_env._motion_lib._motion_data_keys)}
-                    #     joblib.dump(zs_dump, osp.join(self.config['network_path'], "zs_run.pkl"))
-                    
-  
+                    print("------------------------------------------")
+                    print("------------------------------------------")
+                    print(f"Success Rate: {self.success_rate:.10f}")
+                    print("Succ: "," \t".join([f"{k}: {v:.3f}" for k, v in metrics_print.items()]))
 
-                    # # joblib.dump(np.concatenate(self.zs_all[: humanoid_env._motion_lib._num_unique_motions]), osp.join(self.config['network_path'], "zs.pkl"))
+                    # Michael: For saving motion tracking statistics to disk
+                    metric_dir = f'mt_metrics/{self.pdp_type}/ckpt={self.ckpt_epoch}_with_names'
+                    metric_fname = f'metrics_{self.collect_start_idx}-{self.collect_start_idx + self.collect_step_idx}.npz'
+                    pathlib.Path(metric_dir).mkdir(parents=True, exist_ok=True)
+                    metric_path = os.path.join(metric_dir, metric_fname)
+                    success = ~self.terminate_memory[0]
+                    failed_names = self.motion_lib.curr_motion_keys[~success]
+                    np.savez(
+                        metric_path,
+                        success=success,
+                        failed_names=failed_names,
+                        **metrics
+                    )
 
-                    # joblib.dump(failed_keys, osp.join(self.config['network_path'], "failed.pkl"))
-                    # joblib.dump(success_keys, osp.join(self.config['network_path'], "long_succ.pkl"))
-                    # print("....")
+                    exit()
 
                 done[:] = 1  # Turning all of the sequences done and reset for the next batch of eval.
                 #humanoid_env.forward_motion_samples()
@@ -330,6 +338,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         max_steps = self.motion_lib.get_motion_num_steps().max() 
         ep_lens = self.motion_lib.get_motion_num_steps() 
 
+        print(f'Max steps: {max_steps}')
+
         # import ipdb; ipdb.set_trace() # Takara
         
         # obs_store = np.zeros((self.env.num_envs, max_steps, 312)) # 312 for local obs , 576 for phc obs, 648 312 + 
@@ -337,6 +347,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
         if self.obs_type == 't2m':
             obs_store = np.zeros((self.env.num_envs, max_steps, 360)) # 312 for local obs , 576 for phc obs, 648 312 + 
+        elif self.obs_type == 'ref':
+            obs_store = np.zeros((self.env.num_envs, max_steps, 576))   #diff obs + ref obs
         elif self.obs_type == 'phc':
             obs_store = np.zeros((self.env.num_envs, max_steps, 576)) #  for phc obs 
         elif self.obs_type =='ref':
@@ -347,12 +359,13 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         act_store = np.zeros((self.env.num_envs, max_steps, 69)) 
         done_envs = np.zeros(self.env.num_envs,dtype=bool)            
         
+        # NOTE: MT eval
         if self.mode == 'diff' or self.mode == 'eval':
-            # load checkpoint       
+            # load checkpoint
             payload = torch.load(open(self.ckpt_path, 'rb'), pickle_module=dill)
 
             hydra_cfg = payload['cfg']
-            hydra_cfg['task']['dataset']['zarr_path'] ='/move/u/takaraet/my_diffusion_policy/phc_data/v0.0/phc_data_v0.0.zarr'
+            # hydra_cfg['task']['dataset']['zarr_path'] ='/move/u/takaraet/my_diffusion_policy/phc_data/v0.0/phc_data_v0.0.zarr' # probably no need to set dataset since the checkpoint will take care of the normalizer anyway
 
 
             # import ipdb; ipdb.set_trace() # Takara  
@@ -398,9 +411,13 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             if self.mode == 'diff' or self.mode == 'eval':
                 # import ipdb; ipdb.set_trace() # Takara
 
-                # obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs*0))] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+                obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs*0))] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+
+                # NOTE: MT eval
                 if self.obs_type == 't2m':
                     obs_deque = collections.deque([self.env.task.diff_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+                elif self.obs_type == 'ref':
+                    obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))] * hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 elif self.obs_type == 'phc':
                     obs_deque = collections.deque([self.env.task.phc_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 elif self.obs_type =='ref':
@@ -408,10 +425,9 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 else:
                     raise Exception('Invalid obs_type')
             
-            # Sample a text goal - Michael  
-            # import ipdb; ipdb.set_trace() # Takara
-            
+            # Sample a text goal - Michael 
             if self.obs_type != 'phc':
+                # t2m stuff
                 if self.mode == 'diff':
                     sampled_texts = None
                     if hardcoded_text is None:
@@ -432,10 +448,27 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         self.motion_lib.curr_motion_keys,
                         clip_model
                     )
-                #print(f'Sampled texts: {sampled_texts}')
+                    print(f'Sampled texts: {sampled_texts}')
+                else:
+                    text_embed = encode_text(hardcoded_text, clip_model)
+                    text_embeds = text_embed.repeat(self.env.num_envs, 1)
+                    print(f'Hardcoded text: {hardcoded_text}')
             else:
-                text_embeds = torch.zeros((self.env.num_envs, 512)).to('cuda') 
-                sampled_texts = 'None'
+                if self.mode == 'eval':
+                    if self.obs_type == 't2m':
+                        hardcoded_text = None
+                        text_embeds, sampled_texts = sample_text_embeds_for_eval(
+                            self.env.num_envs,
+                            self.m2t_map, 
+                            self.motion_lib.curr_motion_keys,
+                            clip_model
+                        )
+                    else:
+                        text_embeds = np.zeros((self.env.num_envs, 512))
+                        sampled_texts = None
+                else:
+                    text_embeds = np.zeros((self.env.num_envs, 512))
+                    sampled_texts = None
 
             batch_size = 1
             batch_size = self.get_batch_size(obs_dict["obs"], batch_size)
@@ -463,7 +496,9 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     
                     if self.obs_type == 't2m':
                         #self.env.task._compute_task_obs() # Michael
-                        observation = self.env.task.diff_obs    
+                        observation = self.env.task.diff_obs   
+                    elif self.obs_type == 'ref':
+                        observation = np.hstack((self.env.task.diff_obs, self.env.task.ref_obs)) 
                     elif self.obs_type == 'phc':
                         observation = self.env.task.phc_obs
                     elif self.obs_type =='ref':
@@ -492,14 +527,21 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             obs_store[~done_envs, n,:] = observation[~done_envs,:]
 
                     if self.mode == 'diff' or self.mode == 'eval':
+                        # is_determenistic = True
+                        # if has_masks:
+                        #     masks = self.env.get_action_mask()
+                        #     action = self.get_masked_action(obs_dict, masks, is_determenistic)
+                        # else:
+                        #     action = self.get_action(obs_dict, is_determenistic)
+
+                        # NOTE: MT eval
                         obs_deque.append(observation)
 
-                        if self.env.task.text_input:
-                            text_embed = encode_text(self.env.task.text_input, clip_model)
-                            text_embeds = text_embed.repeat(self.env.num_envs, 1)
+                        # if self.env.task.text_input:
+                        #     text_embed = encode_text(self.env.task.text_input, clip_model)
+                        #     text_embeds = text_embed.repeat(self.env.num_envs, 1)
 
-                        # import ipdb; ipdb.set_trace() # Takara
-                        # print(self.env.task.text_input)
+                        # NOTE: MT eval
                         clean_traj = torch.ones(self.env.num_envs)
                         action_dict = policy.predict_action(        
                             {'obs': torch.tensor(np.stack(list(obs_deque), 1))},
@@ -507,7 +549,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         )
 
                         action = action_dict['action'][:,0,:] # if horizon =1 then use action_pred
-                        
                         if self.mode == 'eval':
                             assert self.env.num_envs == observation.shape[0]
                             obs_store[~done_envs, n, :] = observation[~done_envs, :]
@@ -531,18 +572,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     #####################################################################################################################
                     cr += r
                     steps[~done_envs] += 1
-
-                    # Record failed language prompts
-                    # if self.mode == 'diff' and self.terminate_state.sum() > 0:
-                    #     if sampled_texts is not None:
-                    #         terminated_idxs = torch.argwhere(self.terminate_state).squeeze().tolist()
-                    #         if not isinstance(terminated_idxs, np.ndarray):
-                    #             terminated_idxs = [terminated_idxs]
-                    #         failed = sampled_texts[terminated_idxs]
-
-                    #         for fail in failed:
-                    #             # import ipdb; ipdb.set_trace() # Takara
-                    #             self.failed_texts.add(str(fail))
                 
                     
                     if COLLECT_Z: info['z'] = z
@@ -562,23 +591,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
                     termination_state = info["terminate"]
                     self.terminate_state_eval[~done_envs] = torch.logical_or(termination_state[~done_envs], self.terminate_state_eval[~done_envs])
-                    # print(termination_state)
-                    print(self.terminate_state_eval.tolist())
-                    # print(done_envs)
-                    # print()
-                    # if self.terminate_state_eval.sum() > 0:
-                    #     import ipdb; ipdb.set_trace() # Takara
-                    
-                    # if done_envs.sum() > 0:
-                    #     import ipdb; ipdb.set_trace() # Takara
-
-                    # print(self.terminate_state)
-                    # print()
-                    # if np.sum(self.terminate_state) >0 :
-                    #     import ipdb; ipdb.set_trace() # Takara
-
-
-
+                    #print(self.terminate_state_eval.tolist())
+        
                     if self.mode=='collect':
 
                         if done_envs.all():
@@ -588,6 +602,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             print(f'Failed motions: {failure}')
                             
                             failed = ''
+                            failed_names = []
                             if self.terminate_state.any().item():
                                 failed = '_FAILED'
                                 failed_idx = self.terminate_state.nonzero(as_tuple=False).squeeze()
@@ -601,28 +616,81 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                                 if all([is_forbidden(name) for name in failed_names]):
                                     failed = ''
 
-                            # data_dir = f'collected_data/obs-{self.obs_type}_sigma={self.act_noise}'
-                            data_dir = f'collected_data/cartwheel_20_obs-{self.obs_type}_sigma={self.act_noise}'
-                            assert np.sum(act_store[:,:,:],(0,1,2)) !=0, 'all 0 actions'
 
+                            # data_dir = f'collected_data/obs-{self.obs_type}_sigma={0.06}'
+                            # ep_lens = self.motion_lib.get_motion_num_steps()
+                            # for i, motion_id in enumerate(self.motion_lib._curr_motion_ids):
+                            #     motion_name = self.motion_lib.curr_motion_keys[i]
+                            #     if motion_name in failed_names:
+                            #         continue
+                                
+                            #     # Write the new data to disk
+                            #     motion_id = motion_id.item()
+                            #     file_start_idx = (motion_id // 100) * 100
+                            #     file_end_idx = file_start_idx + 100
+                            #     data_fname = f'phc_data_sigma={0.06}_{file_start_idx}-{file_end_idx}.npz'
+                            #     data_path = os.path.join(data_dir, data_fname)
+                            #     if os.path.exists(data_path):
+                            #         data = np.load(data_path, allow_pickle=True)
+                            #         idx = motion_id % 100
+                            #         assert motion_name == data['ep_name'][idx]
+
+                            #         new_obs = obs_store[i, :ep_lens[i]]
+                            #         new_act = act_store[i, :ep_lens[i]]
+                            #         new_ep_len = ep_lens[i]
+                            #         new_ep_name = motion_name
+
+                            #         data['obs'][idx, :ep_lens[i]] = new_obs
+                            #         data['act'][idx, :ep_lens[i]] = new_act
+                            #         data['ep_len'][idx] = new_ep_len
+                            #         data['ep_name'][idx] = new_ep_name
+
+                            #         np.savez(
+                            #             data_path,
+                            #             **data
+                            #         )
+
+                            
+                            data_dir = f'collected_data/obs-{self.obs_type}_sigma={self.act_noise}'
                             pathlib.Path(data_dir).mkdir(parents=True, exist_ok=True)
                             end_idx = self.collect_start_idx + self.collect_step_idx
                             data_fname = f'phc_data_sigma={self.act_noise}_{self.collect_start_idx}-{end_idx}{failed}.npz'
                             data_path = os.path.join(data_dir, data_fname)
-
-                            # if self.terminate_state.sum().item() > 0:
-                            #     term =np.where(self.terminate_memory)[0]
-                            # else:
-                            #     term = []
-                            # import ipdb; ipdb.set_trace()
-
                             np.savez(
                                 data_path,
                                 obs=obs_store, act=act_store,
-                                ep_len=self.motion_lib.get_motion_num_steps().cpu().numpy(),
-                                ep_name = self.motion_lib.curr_motion_keys,
-                                terminate= np.where(self.terminate_state)[0]
+                                ep_len=self.motion_lib.get_motion_num_steps().cpu().numpy()-1,
+                                ep_name = self.motion_lib.curr_motion_keys
                             )
+
+                            success_names = [name for name in self.motion_lib.curr_motion_keys if name not in failed_names]
+                            handle_failed_names(failed_names, success_names, data_dir)
+
+
+                            # NOTE: TAKARA code from merge =====
+                            # # data_dir = f'collected_data/obs-{self.obs_type}_sigma={self.act_noise}'
+                            # data_dir = f'collected_data/cartwheel_20_obs-{self.obs_type}_sigma={self.act_noise}'
+                            # assert np.sum(act_store[:,:,:],(0,1,2)) !=0, 'all 0 actions'
+
+                            # pathlib.Path(data_dir).mkdir(parents=True, exist_ok=True)
+                            # end_idx = self.collect_start_idx + self.collect_step_idx
+                            # data_fname = f'phc_data_sigma={self.act_noise}_{self.collect_start_idx}-{end_idx}{failed}.npz'
+                            # data_path = os.path.join(data_dir, data_fname)
+
+                            # # if self.terminate_state.sum().item() > 0:
+                            # #     term =np.where(self.terminate_memory)[0]
+                            # # else:
+                            # #     term = []
+                            # # import ipdb; ipdb.set_trace()
+
+                            # np.savez(
+                            #     data_path,
+                            #     obs=obs_store, act=act_store,
+                            #     ep_len=self.motion_lib.get_motion_num_steps().cpu().numpy(),
+                            #     ep_name = self.motion_lib.curr_motion_keys,
+                            #     terminate= np.where(self.terminate_state)[0]
+                            # )
+                            # =====
 
                             print(f'Saved data to {data_path}')
 
@@ -639,8 +707,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
                             print(f'GOT TO END OF EVAL')
 
-
-
                             data_dir = f'eval_data/{self.ckpt_version}_{self.data_split}/ckpt={self.ckpt_epoch}'
                             pathlib.Path(data_dir).mkdir(parents=True, exist_ok=True)
                             end_idx = self.collect_start_idx + self.collect_step_idx
@@ -654,8 +720,23 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                                 ep_name=self.motion_lib.curr_motion_keys
                             )
 
-                            print(f'Saved data to {data_path}')
+                            # if self.obs_type == 't2m':
+                            #     data_dir = f'eval_data/{self.ckpt_version}_{self.data_split}/ckpt={self.ckpt_epoch}'
+                            #     pathlib.Path(data_dir).mkdir(parents=True, exist_ok=True)
+                            #     end_idx = self.collect_start_idx + self.collect_step_idx
+                            #     data_fname = f'data_{self.collect_start_idx}-{end_idx}.npz'
+                            #     data_path = os.path.join(data_dir, data_fname)
+                            #     np.savez(
+                            #         data_path,
+                            #         obs=obs_store, act=act_store,
+                            #         #ep_len=steps.cpu().numpy(),
+                            #         ep_len=self.motion_lib.get_motion_num_steps().cpu().numpy(), # Keep track of original ep_len
+                            #         ep_name=self.motion_lib.curr_motion_keys
+                            #     )
+
+                            #print(f'Saved data to {data_path}')
                             exit()
+
                             # Data saved
                     elif self.mode=='pert':
                         cutoff= 150 #150
@@ -691,6 +772,28 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
         import ipdb; ipdb.set_trace() # Takara
 
         return True
+
+
+def handle_failed_names(failed_names, success_names, data_dir):
+    all_recorded_failed = []
+    if os.path.exists(os.path.join(data_dir, 'failed.txt')):
+        with open(os.path.join(data_dir, 'failed.txt'), 'r') as f:
+            all_recorded_failed = f.read().split('\n')
+            all_recorded_failed = [name for name in all_recorded_failed if name != '']
+
+    # Handle names that previously failed but are now successful
+    for name in success_names:
+        if name in all_recorded_failed:
+            all_recorded_failed.remove(name)
+    
+    # Handle new failed names
+    for name in failed_names:
+        if name not in all_recorded_failed:
+            all_recorded_failed.append(name)
+    
+    with open(os.path.join(data_dir, 'failed.txt'), 'w') as f:
+        f.write('\n'.join(all_recorded_failed) + '\n')
+
 
 def clean_raw_text(raw_text):
     all_annotations = raw_text.split('\n')

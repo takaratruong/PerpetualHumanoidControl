@@ -21,13 +21,14 @@ from uhc.utils.math_utils import *
 from uhc.smpllib.smpl_mujoco import smpl_to_qpose, qpos_to_smpl
 import copy
 
-def compute_metrics_lite(pred_pos_all, gt_pos_all, root_idx = 0, use_tqdm = True, concatenate = True):
+def compute_metrics_lite(pred_pos_all, gt_pos_all, root_idx = 0, use_tqdm = True, concatenate = True, object_arr=False):
+    assert concatenate != object_arr
     metrics = defaultdict(list)
     if use_tqdm:
         pbar = tqdm(range(len(pred_pos_all)))
     else:
         pbar = range(len(pred_pos_all))
-        
+    
     for idx in pbar:
         jpos_pred = pred_pos_all[idx].copy()
         jpos_gt = gt_pos_all[idx].copy()
@@ -51,6 +52,8 @@ def compute_metrics_lite(pred_pos_all, gt_pos_all, root_idx = 0, use_tqdm = True
     
     if concatenate:
         metrics = {k:np.concatenate(v) for k, v in metrics.items()}
+    if object_arr:
+        metrics = {k:np.array(v, dtype=object) for k, v in metrics.items()}
     return metrics
 
 def p_mpjpe(predicted, target):

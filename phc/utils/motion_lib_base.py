@@ -363,6 +363,10 @@ class MotionLibBase():
         
         data_list = self._motion_data_load
 
+        self.motion_to_len = {}
+        for k, v in data_list.items():
+            self.motion_to_len[k] = len(v['trans_orig'])
+
         if self.mode == MotionlibMode.file:
             if min_length != -1:
                 data_list = {k: v for k, v in list(self._motion_data_load.items()) if len(v['pose_quat_global']) >= min_length}
@@ -473,6 +477,7 @@ class MotionLibBase():
         #################################################################################################
         name2idx = {name: idx for idx, name in enumerate(self._motion_data_keys)}
         names = FAILED_MOT # 
+        #names = FAILED_MOT_1 # 
         # print(len(final_failed))
         # names = final_failed[21:] #FAILED_MOT_1 + FAILED_MOT_2 + FAILED_MOT_3 + FAILED_MOT_4 #FAILED_MOT_5 + FAILED_MOT_6 + FAILED_MOT_7 + FAILED_MOT_8
         # names = [CARTWHEEL[0]]        
@@ -514,19 +519,79 @@ class MotionLibBase():
         #         idx = np.where(self._motion_data_keys == '0-'+name)[0][0]
         #         eval_idxs.append(idx)
             
-        #     eval_idxs = np.array(sorted(eval_idxs))
-        #     print(f'Number of eval keys: {len(eval_idxs)}')
-        
+            # eval_idxs = np.flip(np.array(sorted(eval_idxs)), axis=0)
+            # print(f'Number of eval keys: {len(eval_idxs)}')
+            
+
+        # def get_upsample_dist(m2a_map, action_counts, subset):
+        #     action_labels = []
+        #     for motion_name in subset:
+        #         action_labels.append(m2a_map[motion_name[2:]])
+
+        #     weights = np.array([1/action_counts[act] for act in action_labels])
+        #     weights /= sum(weights)
+        #     assert len(weights) == len(subset)
+        #     return weights
+
+
+
+        # # ============
+        # # NOTE: For upsampled motions
+        # UPSAMPLE = False
+        # # if self.mode_ == 'collect' and UPSAMPLE:
+        # #     short_subset_mask = [self.motion_to_len[name] <= 800 for name in self._motion_data_keys]
+        # #     subset = self._motion_data_keys[short_subset_mask]
+        # #     m2a_map = np.load('motion_to_action_map_KIT.npz', allow_pickle=True)['motion_to_action_map'][()]
+        # #     action_counts = np.load('action_counts_KIT.npz', allow_pickle=True)['action_counts'][()]
+        # #     weights = get_upsample_dist(m2a_map, action_counts, subset)
+        # #     print(f'Number of short motions: {len(subset)}')
+        # # ============
+
+
+        # # ============
+        # # NOTE: For retrying failed motions 
+        # COLLECT_FAILED = False
+        # failed_motion_file = 'collected_data/obs-phc_sigma=0.06/failed.txt'
+        # if self.mode_ == 'collect' and COLLECT_FAILED:
+        #     failed_idxs = []
+        #     with open(failed_motion_file, 'r') as f:
+        #         failed_names = f.readlines()
+        #         for name in failed_names:
+        #             idx = np.where(self._motion_data_keys == name.strip())[0][0]
+        #             failed_idxs.append(idx)
+                    
+        #     failed_idxs = np.flip(np.array(sorted(failed_idxs)), axis=0)
+        #     print(f'Number of failed keys: {len(failed_idxs)}')
+        # # ============
+
         # print(f'Number of motion keys: {len(self._motion_data_keys)}')
 
+        # # ===== Choose sample_idxes based on mode =====
         # start_idx = self.collect_start_idx
         # if self.mode_ == 'eval':
         #     end_idx = min(start_idx + self.collect_step_idx, len(eval_idxs))
         #     sample_idxes = np.arange(start_idx, end_idx)
         #     sample_idxes = eval_idxs[sample_idxes]
-        # else:
-        #     end_idx = min(start_idx + self.collect_step_idx, len(self._motion_data_keys))
+        # elif self.mode_ == 'collect' and COLLECT_FAILED:
+        #     end_idx = min(start_idx + self.collect_step_idx, len(failed_idxs))
         #     sample_idxes = np.arange(start_idx, end_idx)
+        #     sample_idxes = failed_idxs[sample_idxes]
+        # else:
+        #     if UPSAMPLE:
+        #         base_idxs = np.arange(len(self._motion_data_keys))
+        #         base_idxs = base_idxs[short_subset_mask]
+        #         upsample_idxs = np.random.choice(
+        #             base_idxs, size=len(base_idxs),
+        #             replace=True, p=weights
+        #         )
+        #         end_idx = min(start_idx + self.collect_step_idx, len(subset))
+        #         sample_idxes = np.arange(start_idx, end_idx)
+        #         sample_idxes = upsample_idxs[sample_idxes]
+        #     else:
+        #         end_idx = min(start_idx + self.collect_step_idx, len(self._motion_data_keys))
+        #         sample_idxes = np.arange(start_idx, end_idx)
+        # =====
+
 
         # # sample_idxes = shuffled_idxs[sample_idxes] # permuation of motion data keys
         # sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
@@ -541,6 +606,9 @@ class MotionLibBase():
         #sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
 
         #######################################################################################3
+
+        if isinstance(sample_idxes, np.ndarray):
+            sample_idxes = torch.tensor(sample_idxes, device=self._device)
         
         self._curr_motion_ids = sample_idxes
         self.one_hot_motions = torch.nn.functional.one_hot(self._curr_motion_ids, num_classes = self._num_unique_motions).to(self._device)  # Testing for obs_v5
@@ -556,6 +624,8 @@ class MotionLibBase():
         # else:       
         #     print(self.curr_motion_keys[:50], ".....")
         print("*********************************************************************************\n")
+
+        print(f'Cur motion ids: {self._curr_motion_ids}')
 
         motion_data_list = self._motion_data_list[sample_idxes.cpu().numpy()]
         mp.set_sharing_strategy('file_descriptor')

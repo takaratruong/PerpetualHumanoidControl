@@ -1,5 +1,7 @@
 
 slurm_out
+collected_data
+mt_metrics
 
 *.json
 
