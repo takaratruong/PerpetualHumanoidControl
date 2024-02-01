@@ -1223,7 +1223,7 @@ def compute_imitation_observations(root_pos, root_rot, body_pos, body_rot, body_
     # We do not use any dof in observation.
     obs = []
     B, J, _ = body_pos.shape
-
+    
     if not upright:
         root_rot = remove_base_rot(root_rot)
 

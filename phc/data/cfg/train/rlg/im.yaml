@@ -41,8 +41,8 @@ params:
       initializer:
         name: default
 
-  load_checkpoint: True # /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_4_iccv/Humanoid_00005000.pth # false #False
-  load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_4_iccv/Humanoid_00005000.pth
+  load_checkpoint: false #True # /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_4_iccv/Humanoid_00005000.pth # false #False
+  #load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_4_iccv/Humanoid_00005000.pth
   
   config:
     name: Humanoid

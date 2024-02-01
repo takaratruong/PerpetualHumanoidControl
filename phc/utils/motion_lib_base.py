@@ -472,7 +472,7 @@ class MotionLibBase():
         
         #################################################################################################
         name2idx = {name: idx for idx, name in enumerate(self._motion_data_keys)}
-        names = FAILED_MOT_1 # 
+        names = FAILED_MOT # 
         # print(len(final_failed))
         # names = final_failed[21:] #FAILED_MOT_1 + FAILED_MOT_2 + FAILED_MOT_3 + FAILED_MOT_4 #FAILED_MOT_5 + FAILED_MOT_6 + FAILED_MOT_7 + FAILED_MOT_8
         # names = [CARTWHEEL[0]]        
@@ -482,7 +482,9 @@ class MotionLibBase():
         # names = FLIPS
         # len(names)      
         sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
-        sample_idxes = torch.sort(sample_idxes).values.repeat_interleave(80)
+        # sample_idxes = torch.sort(sample_idxes).values.repeat_interleave(80)
+        sample_idxes = torch.sort(sample_idxes).values.repeat(80)
+
         # np.random.shuffle(sample_idxes)     
         sample_idxes= sample_idxes[:len(skeleton_trees)]
 

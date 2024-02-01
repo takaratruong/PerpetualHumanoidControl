@@ -272,7 +272,7 @@ def main(args):
             notes=cfg.get("notes", "no notes"),
         )
         wandb.config.update(cfg, allow_val_change=True)
-        wandb.run.name = 'prim_cartwheel' # exp_name #cfg_env_name
+        wandb.run.name = 'prim_base_failed' # exp_name #cfg_env_name
         wandb.run.save()
 
 
