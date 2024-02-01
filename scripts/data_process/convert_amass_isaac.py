@@ -147,8 +147,8 @@ def run(in_file: str, out_file: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--in_file", type=str, default="sample_data/amass_copycat_take5_train.pkl")
-    parser.add_argument("--out_file", type=str, default="phc/data/amass/pkls/amass_copycat_take5_train.pkl")
+    parser.add_argument("--in_file", type=str, default="sample_data/amass_diffPol_valid.pkl")
+    parser.add_argument("--out_file", type=str, default="phc/data/amass/pkls/amass_diffPol_valid.pkl")
     args = parser.parse_args()
     run(
         in_file=args.in_file,

@@ -82,7 +82,7 @@ all_sequences = [
     "TotalCapture",
     "Transitions_mocap",
     "BMLhandball",
-    # "DanceDB"
+    "DanceDB"
 ]
 
 def read_data(folder, sequences):
@@ -177,9 +177,10 @@ if __name__ == "__main__":
     out_path = Path(args.out_dir)
     out_path.mkdir(exist_ok=True)
     db_file = osp.join(out_path, "amass_db_smplh.pt")
+    
+    # db = read_data(args.dir, sequences=args.sequences)
+    db = read_data(args.dir, sequences="all")
 
-    db = read_data(args.dir, sequences=args.sequences)
-     
     
     print(f"Saving AMASS dataset to {db_file}")
     joblib.dump(db, db_file)

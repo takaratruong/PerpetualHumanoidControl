@@ -65,6 +65,11 @@ from learning import amp_network_pnn_builder
 
 from env.tasks import humanoid_amp_task
 
+# import resource
+# rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+# print(rlimit)
+# resource.setrlimit(resource.RLIMIT_NOFILE, (2000, rlimit[1]))
+
 # args = None
 # cfg = None
 # cfg_train = None
@@ -257,6 +262,7 @@ def main(args):
         flags.real_traj = True
     
 
+    # exp_name = vargs['exp_name'] # pass command line args to runner config
     project_name = cfg.get("project_name", "egoquest")
     if (not args.no_log) and (not args.test) and (not args.debug):
         wandb.init(
@@ -266,8 +272,9 @@ def main(args):
             notes=cfg.get("notes", "no notes"),
         )
         wandb.config.update(cfg, allow_val_change=True)
-        wandb.run.name = cfg_env_name
+        wandb.run.name = 'prim_cartwheel' # exp_name #cfg_env_name
         wandb.run.save()
+
 
     cfg_train['params']['seed'] = set_seed(cfg_train['params'].get("seed", -1), cfg_train['params'].get("torch_deterministic", False))
 
@@ -314,7 +321,8 @@ def main(args):
     # === 
     # import ipdb; ipdb.set_trace() # TAKARA
     
-    
+    # seed_all(cfg_train['params']['seed'])
+
     algo_observer = RLGPUAlgoObserver()
     runner = build_alg_runner(algo_observer)
     runner.load(cfg_train)
@@ -323,11 +331,11 @@ def main(args):
     return
 
 
-def seed_all(seed):
-    random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    np.random.seed(seed)
+# def seed_all(seed):
+#     random.seed(seed)
+#     torch.manual_seed(seed)
+#     torch.cuda.manual_seed(seed)
+#     np.random.seed(seed)
 
 if __name__ == '__main__':
     main(get_args())
