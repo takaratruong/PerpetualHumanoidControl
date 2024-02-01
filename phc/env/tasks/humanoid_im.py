@@ -1669,14 +1669,17 @@ def compute_humanoid_im_reset(reset_buf, progress_buf, contact_buf, contact_body
     # TAKARA disable termination 
     enable_early_termination =  True
     if (enable_early_termination):
-        # if use_mean:
-        #     has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1).mean(dim=-1, keepdim=True) > termination_distance[0], dim=-1)  # using average, same as UHC"s termination condition
-        # else:
-            # has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1) > termination_distance, dim=-1)  # using max
-        # import ipdb; ipdb.set_trace()   
+        if use_mean:
+            has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1).mean(dim=-1, keepdim=True) > termination_distance[0], dim=-1)  # using average, same as UHC"s termination condition
+        else:
+            has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1) > termination_distance, dim=-1)  # using max
+        
+        #print(f'use_mean: {use_mean}. termination_distance: {termination_distance}. has_fallen: {has_fallen}')
         # has_fallen = torch.any(torch.norm(rigid_body_pos, dim=-1) <= .1, dim=-1)  # using max
         # import ipdb; ipdb.set_trace()
-        has_fallen = torch.any(rigid_body_pos[:,[0,11],-1] <= .2,dim=-1 ) # using max
+
+        # TAKARA
+        #has_fallen = torch.any(rigid_body_pos[:,[0,11],-1] <= .2,dim=-1 ) # using max
 
         # first timestep can sometimes still have nonzero contact forces
         # so only check after first couple of steps
