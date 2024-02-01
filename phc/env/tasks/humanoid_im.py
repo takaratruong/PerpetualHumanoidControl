@@ -1,5 +1,3 @@
-
-
 import os.path as osp
 from typing import OrderedDict
 import torch
@@ -129,6 +127,8 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
 
         env_ids = to_torch(np.arange(self.num_envs), device=self.device, dtype=torch.long)
         root_states = self._initial_humanoid_root_states[env_ids].clone()
+
+        root_states[..., 0:2] = torch.randn_like(root_states[..., 0:2]) * .3   ## Random root position on plane
 
         root_states[..., 3:7] = torch.randn_like(root_states[..., 3:7])  ## Random root rotation
         root_states[..., 3:7] = torch.nn.functional.normalize(root_states[..., 3:7], dim=-1)
@@ -457,7 +457,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
             num_for_this_humanoid += 1
         joblib.dump(motion_dict_dump, file_name)
         self.state_record = defaultdict(list)
-
+        
     def begin_seq_motion_samples(self):
         # For evaluation
         self.start_idx = 0
@@ -468,7 +468,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         self.start_idx += self.num_envs
         self._motion_lib.load_motions(skeleton_trees=self.skeleton_trees, gender_betas=self.humanoid_shapes.cpu(), limb_weights=self.humanoid_limb_and_weights.cpu(), random_sample=False, start_idx=self.start_idx)
         self.reset()
-
+    
     # Disabled.
     # def get_self_obs_size(self):
     #     if self.obs_v == 4:
@@ -1669,26 +1669,22 @@ def compute_humanoid_im_reset(reset_buf, progress_buf, contact_buf, contact_body
     # TAKARA disable termination 
     enable_early_termination =  True
     if (enable_early_termination):
+        
         if use_mean:
             has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1).mean(dim=-1, keepdim=True) > termination_distance[0], dim=-1)  # using average, same as UHC"s termination condition
         else:
             has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1) > termination_distance, dim=-1)  # using max
+        # import ipdb; ipdb.set_trace()    
+        # has_fallen = torch.any(rigid_body_pos[:,[0,11],-1] <= .2,dim=-1 ) # TAKARA
         
-        #print(f'use_mean: {use_mean}. termination_distance: {termination_distance}. has_fallen: {has_fallen}')
-        # has_fallen = torch.any(torch.norm(rigid_body_pos, dim=-1) <= .1, dim=-1)  # using max
-        # import ipdb; ipdb.set_trace()
-
-        # TAKARA
-        #has_fallen = torch.any(rigid_body_pos[:,[0,11],-1] <= .2,dim=-1 ) # using max
-
         # first timestep can sometimes still have nonzero contact forces
         # so only check after first couple of steps
         has_fallen *= (progress_buf > 1)
         if disableCollision:
             has_fallen[:] = False
         terminated = torch.where(has_fallen, torch.ones_like(reset_buf), terminated)
-    
-    # terminated = torch.zeros_like(reset_buf)
+
+        # terminated = torch.zeros_like(reset_buf)
 
         # if (contact_buf.abs().sum(dim=-1)[0] > 0).sum() > 2:
         #     np.set_printoptions(precision=4, suppress=1)

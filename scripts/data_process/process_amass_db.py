@@ -224,11 +224,18 @@ def process_qpos_list(qpos_list):
     return amass_res
 
 
+# amass_splits = {
+#     'vald': ['KIT'],  #['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
+#     'test': ['KIT'],  # ['Transitions_mocap', 'SSM_synced'],
+#     'train': ['KIT'], #['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
+# }
+
+
 amass_splits = {
-    'vald': ['KIT'],  #['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
-    'test': ['KIT'],  # ['Transitions_mocap', 'SSM_synced'],
-    'train': ['KIT'], #['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
-}
+    'vald': ['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
+    'test': ['Transitions_mocap', 'SSM_synced'],
+    'train': ['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
+}   
 
 amass_split_dict = {}
 for k, v in amass_splits.items():
@@ -244,7 +251,7 @@ if __name__ == "__main__":
 
     np.random.seed(0)
     flags.debug = args.debug
-    take_num = "my_take"
+    take_num = "diffPol"
     amass_seq_data = {}
     seq_length = -1
 
