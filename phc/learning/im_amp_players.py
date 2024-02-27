@@ -119,7 +119,11 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
 
     def _post_step(self, info, done):
         super()._post_step(info)
-        # return done
+        
+        if flags.rand_start:
+            self.curr_stpes += 1
+            return torch.tensor([int(self.curr_stpes > self.max_steps)])
+
 
         if self.mode == 'pert':
             return torch.zeros(self.env.num_envs).to(self.device) #(torch.arange(self.env.num_envs)).to(self.device)
@@ -304,7 +308,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             done = self.curr_stpes >= max_steps  
                 
         return done
-
+    
     def get_z(self, obs_dict):
         obs = obs_dict['obs']
         if self.has_batch_dimension == False:
@@ -516,10 +520,15 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             action += torch.randn_like(action) * self.act_noise  # if using the lower level RL controllers 
 
                         self.env.task.use_noisy_action = True
+                        # import ipdb; ipdb.set_trace() # Takara
 
-                        if observation.shape[0] == self.env.num_envs:
-                            obs_store[~done_envs, n,:] = observation[~done_envs,:]
+                        if observation.shape[0] != self.env.num_envs:
+                            assert False, 'A Bug has been reached, Observation shape does not match the number of envs'
+                            import ipdb; ipdb.set_trace() # Takara
 
+                        obs_store[~done_envs, n,:] = observation[~done_envs,:]
+            
+            
                     if self.mode == 'diff' or self.mode == 'eval':
                         obs_deque.append(observation)
 
@@ -549,12 +558,20 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     
                     # CHANGE BACK
                     #####################################################################################################################
+
+                    assert self.env.task.mean_action.shape[0] == self.env.num_envs, 'a bug has been reached'
+
+
                     if self.mode in ['collect', 'pert']:      
                         if self.env.task.mean_action.shape[0] == self.env.num_envs:
                             act_store[~done_envs, n,:] = self.env.task.mean_action[~done_envs,:]
-                    else: 
-                        if action_clean.shape[0] == self.env.num_envs:
-                            act_store[~done_envs, n,:] = action_clean[~done_envs,:]
+                    # else: 
+
+                    # if flags.rand_start:
+                    
+
+                    # THIS IS FOR EXPERT
+                    # act_store[~done_envs, n,:] = action_clean[~done_envs,:]
                     
                     # print(self.terminate_state)
                     #####################################################################################################################
@@ -597,8 +614,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     self.terminate_state_eval[~done_envs] = torch.logical_or(termination_state[~done_envs], self.terminate_state_eval[~done_envs])
 
                     # print(termination_state)
-                    # print(self.terminate_state_eval.tolist())
-
+                    print(self.terminate_state_eval.sum())
+                    
                     # print(done_envs)
                     # print()
                     # if self.terminate_state_eval.sum() > 0:
@@ -616,10 +633,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     if self.mode=='collect':
                         
                         if flags.rand_start: 
+                            # if self.curr_stpes == 20: 
+                            #     import ipdb; ipdb.set_trace() # Takara
                             # We will collect 20 frames, but go to 50, this is to ensure that we only collect succesfull recoveries.  
-                            if self.curr_stpes>=50:
+                            if self.curr_stpes>=150:
                                 num_collect = 25 
-
+                                
                                 data_dir = f'collected_data/rand_init_-{self.obs_type}_sigma={self.act_noise}_num_collect={num_collect}'
                                 assert np.sum(act_store[:,:,:],(0,1,2)) !=0, 'all 0 actions'
 
@@ -639,10 +658,12 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                                 # import ipdb; ipdb.set_trace() # Takara
 
                                 # if terminate.sum().item() > 0:
-                                obs = obs_store[~self.terminate_state]
-                                act = act_store[~self.terminate_state]
-                                ep_names = self.motion_lib.curr_motion_keys[~self.terminate_state]
-
+                                obs = obs_store[~self.terminate_state_eval]
+                                act = act_store[~self.terminate_state_eval]
+                                ep_names = self.motion_lib.curr_motion_keys[~self.terminate_state_eval]
+                                
+                                # import ipdb; ipdb.set_trace() # Takara
+                                
                                 # careful consideration for ep_len 
                                 np.savez(
                                     data_path,

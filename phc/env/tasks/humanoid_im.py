@@ -182,7 +182,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         # root_states[..., 0:2] += torch.randn_like(root_states[..., 0:2]) * .25   ## Random root position on plane
         
         min_magnitude = 0.15
-        max_magnitude = 0.4
+        max_magnitude = 0.3
         noise = torch.rand(root_states[..., 0:2].size()).to('cuda')
 
         noise = min_magnitude + (max_magnitude - min_magnitude) * noise 
@@ -1037,7 +1037,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         
         # lets try adding our reward here? 
         # Takara 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         
         return
 
@@ -1102,7 +1102,6 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         
         if flags.rand_start: 
             motion_times = self._sample_time(self._sampled_motion_ids[env_ids])
-
 
         if self.smpl_humanoid :
             motion_res = self._get_state_from_motionlib_cache(self._sampled_motion_ids[env_ids], motion_times, self._global_offset[env_ids])
@@ -1224,7 +1223,12 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         
         pass_time_max = self.progress_buf >=  self.max_episode_length - 1 # torch.tensor([False]).to('cuda') # 
         pass_time_motion_len = time >= self._motion_lib._motion_lengths
-        
+
+        # if pass_time.sum() > 0:
+        #     import ipdb; ipdb.set_trace()
+        # if pass_time_motion_len.sum() > 0:
+        #     import ipdb; ipdb.set_trace()
+
         if self.cycle_motion:
             pass_time = pass_time_max
             if pass_time_motion_len.sum() > 0:
@@ -1287,7 +1291,11 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
 
             # TAKARA 
             # pass_time_max = self.progress_buf >=  self.max_episode_length - 1 # torch.tensor([False]).to('cuda') # 
-            # import ipdb; ipdb.set_trace()
+
+            # if pass_time.sum() > 0:
+            #     import ipdb; ipdb.set_trace()
+            # if pass_time_motion_len.sum() > 0:
+            #     import ipdb; ipdb.set_trace()
             # pass_time_motion_len = time >= 2.0
             # pass_time = 200
 
@@ -1820,8 +1828,8 @@ def compute_humanoid_im_reset(reset_buf, progress_buf, contact_buf, contact_body
         # import ipdb; ipdb.set_trace()    
 
         if rand_start:
-            has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1) > termination_distance*1.5, dim=-1)  # using max
-            
+            has_fallen = torch.any(torch.norm(rigid_body_pos - ref_body_pos, dim=-1) > termination_distance*2, dim=-1)  # using max
+        
         # has_fallen = torch.any(rigid_body_pos[:,[0,11],-1] <= .2,dim=-1 ) # TAKARA
         
         # first timestep can sometimes still have nonzero contact forces

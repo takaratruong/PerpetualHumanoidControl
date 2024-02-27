@@ -41,7 +41,7 @@ run_collection () {
     num_envs=$(( max_idxs - start_idx < collect_step_idx ? max_idxs - start_idx : collect_step_idx ))
 
     status=1
-    seed=542
+    seed=442
     tries=0
     # while [ ${status} -ne 0 -a ${tries} -lt 1 ];
     # do
@@ -55,7 +55,7 @@ run_collection () {
     # --obs_type phc --mode collect --rand_start --im_eval
     python phc/run.py --task HumanoidImMCPGetup --cfg_env phc/data/cfg/phc_shape_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file /move/u/takaraet/PerpetualHumanoidControl/phc/data/amass/pkls/amass_diffPol_train.pkl \
     --network_path output/phc_shape_mcp_iccv --test --num_envs ${num_envs} --epoch -1  --seed ${seed} --act_noise ${act_noise} --collect_start_idx ${start_idx}  --collect_step_idx ${collect_step_idx} \
-    --obs_type phc --mode collect --rand_start --im_eval --headless 
+    --obs_type phc --mode collect --rand_start --headless #--im_eval --headless 
 
     # status=$?
     ((seed++))
