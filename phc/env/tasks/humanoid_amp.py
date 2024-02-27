@@ -59,7 +59,7 @@ import gc
 from phc.utils.flags import flags
 from collections import OrderedDict
 
-HACK_MOTION_SYNC = False
+HACK_MOTION_SYNC = False 
 # HACK_MOTION_SYNC = True
 HACK_CONSISTENCY_TEST = False
 HACK_OUTPUT_MOTION = False
@@ -103,7 +103,7 @@ class HumanoidAMP(Humanoid):
 
         super().__init__(cfg=cfg, sim_params=sim_params, physics_engine=physics_engine, device_type=device_type, device_id=device_id, headless=headless)
 
-        self._motion_start_times = torch.zeros(self.num_envs).to(self.device)
+        self._motion_start_times = torch.zeros(self.num_envs).to(self.device) # + 52.2667 
         self._sampled_motion_ids = torch.zeros(self.num_envs).long().to(self.device)
         # print("motion_file")
         # print('-'*50)
@@ -450,6 +450,9 @@ class HumanoidAMP(Humanoid):
         else:
             assert (False), "Unsupported state initialization strategy: {:s}".format(str(self._state_init))
 
+        # TAKARA
+        # motion_times = 4 # self._sample_time(motion_ids)
+
         if self.smpl_humanoid:
             curr_gender_betas = self.humanoid_shapes[env_ids]
             root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, rb_pos, rb_rot, body_vel, body_ang_vel = self._get_fixed_smpl_state_from_motionlib(motion_ids, motion_times, curr_gender_betas)
@@ -463,6 +466,27 @@ class HumanoidAMP(Humanoid):
         num_envs = env_ids.shape[0]
         motion_ids, motion_times, root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, rb_pos, rb_rot, body_vel, body_ang_vel = self._sample_ref_state(env_ids)
         
+        # import ipdb; ipdb.set_trace()
+        #TAKARA
+    
+        # if flags.rand_start:
+
+        #     max_times = self._motion_lib._motion_lengths[motion_ids] 
+        #     #randomly sample time from 0 to max_times-1 where max_times is in seconds 
+        #     motion_times = torch.rand(num_envs, device=self.device) * (max_times-1) 
+        #     motion_times[motion_times < 0] = 0
+
+        #     # motion_times = 
+        #     # motion_times+=10
+
+        #     motion_res = self._get_state_from_motionlib_cache(motion_ids, motion_times)
+        #     root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, smpl_params, limb_weights, pose_aa, rb_pos, rb_rot, body_vel, body_ang_vel = \
+        #         motion_res["root_pos"], motion_res["root_rot"], motion_res["dof_pos"], motion_res["root_vel"], motion_res["root_ang_vel"], motion_res["dof_vel"], \
+        #         motion_res["motion_bodies"], motion_res["motion_limb_weights"], motion_res["motion_aa"], motion_res["rg_pos"], motion_res["rb_rot"], motion_res["body_vel"], motion_res["body_ang_vel"]
+
+        #     env_ids = torch.arange(self.num_envs, dtype=torch.long, device=self.device)
+        #     self._set_env_state(env_ids=env_ids, root_pos=root_pos, root_rot=root_rot, dof_pos=dof_pos, root_vel=root_vel, root_ang_vel=root_ang_vel, dof_vel=dof_vel, rigid_body_pos=rb_pos, rigid_body_rot=rb_rot, rigid_body_vel=body_vel, rigid_body_ang_vel=body_ang_vel)
+
         # if flags.debug:
         # print('raising for debug')
         # root_pos[..., 2] += 0.5
@@ -596,7 +620,7 @@ class HumanoidAMP(Humanoid):
         self.gym.refresh_actor_root_state_tensor(self.sim)
         self.gym.refresh_rigid_body_state_tensor(self.sim)
 
-        if self._state_reset_happened and "_reset_rb_pos" in self.__dict__:
+        if self._state_reset_happened: # and "_reset_rb_pos" in self.__dict__:
             # ZL: Hack to get rigidbody pos and rot to be the correct values. Needs to be called after _set_env_state
             # Also needs to be after refresh_rigid_body_state_tensor
             env_ids = self._reset_ref_env_ids
@@ -670,9 +694,10 @@ class HumanoidAMP(Humanoid):
 
     def _hack_motion_sync(self):
 
-        if (not hasattr(self, "_hack_motion_time")):
-            self._hack_motion_time = 0.0
-
+        # if (not hasattr(self, "_hack_motion_time")):
+        # self._hack_motion_time = 52.2667 
+        import ipdb; ipdb.set_trace() # Takara  
+        
         num_motions = self._motion_lib.num_motions()
         motion_ids = np.arange(self.num_envs, dtype=np.int)
         motion_ids = torch.from_numpy(np.mod(motion_ids, num_motions))

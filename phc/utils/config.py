@@ -484,6 +484,11 @@ def get_args(benchmark=False):
             "name": "--ckpt_path",
             "type": str,
         },
+        {
+            "name": "--rand_start",
+            "action": "store_true",
+            "default": False,
+        }
     ]
 
     if benchmark:

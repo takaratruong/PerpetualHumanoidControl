@@ -242,6 +242,9 @@ def main(args):
     flags.debug, flags.follow, flags.fixed, flags.divide_group, flags.no_collision_check, flags.fixed_path, flags.real_path, flags.small_terrain, flags.show_traj, flags.server_mode, flags.slow, flags.real_traj, flags.im_eval, flags.no_virtual_display, flags.render_o3d = \
         args.debug, args.follow, False, False, False, False, False, args.small_terrain, True, args.server_mode, False, False, args.im_eval, args.no_virtual_display, args.render_o3d
 
+    flags.rand_start = args.rand_start
+
+
     flags.add_proj = args.add_proj
     flags.has_eval = args.has_eval
     flags.trigger_input = False
@@ -261,7 +264,7 @@ def main(args):
         cfg['env']['episodeLength'] = 99999999999999
         flags.real_traj = True
     
-
+    
     # exp_name = vargs['exp_name'] # pass command line args to runner config
     project_name = cfg.get("project_name", "egoquest")
     if (not args.no_log) and (not args.test) and (not args.debug):
@@ -272,10 +275,10 @@ def main(args):
             notes=cfg.get("notes", "no notes"),
         )
         wandb.config.update(cfg, allow_val_change=True)
-        wandb.run.name = 'prim_base_failed' # exp_name #cfg_env_name
+        wandb.run.name = 'prim_cartwheels_failed3_subset3_retry_pnn' # exp_name #cfg_env_name
         wandb.run.save()
 
-
+    
     cfg_train['params']['seed'] = set_seed(cfg_train['params'].get("seed", -1), cfg_train['params'].get("torch_deterministic", False))
 
     if args.horovod:

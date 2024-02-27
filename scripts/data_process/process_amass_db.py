@@ -171,6 +171,12 @@ def process_qpos_list(qpos_list):
         amass_pose = v["poses"][::skip]
         amass_trans = v["trans"][::skip]
 
+        # import ipdb; ipdb.set_trace()
+        if amass_pose.shape[0] > 1400: 
+            print("Too long", k, amass_pose.shape[0])
+            amass_pose = amass_pose[1200:]
+            amass_trans = amass_trans[1200:]
+
         bound = amass_pose.shape[0]
         if k in amass_occlusion:
             issue = amass_occlusion[k]["issue"]
@@ -232,10 +238,17 @@ def process_qpos_list(qpos_list):
 
 
 amass_splits = {
-    'vald': ['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'],
+    'vald': ['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'], # BUG  
     'test': ['Transitions_mocap', 'SSM_synced'],
     'train': ['CMU', 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
-}   
+} 
+
+
+# amass_splits = {
+#     'vald': [], # BUGBUGBUG <- that is not mine 
+#     'test': [],
+#     'train': ['MPI_HDM05'] #, 'MPI_Limits', 'TotalCapture', 'Eyes_Japan_Dataset', 'KIT', 'BML', 'EKUT', 'TCD_handMocap', "BMLhandball", "DanceDB", "ACCAD", "BMLmovi", "BioMotionLab", "Eyes", "DFaust"]  # Adding ACCAD
+# } 
 
 amass_split_dict = {}
 for k, v in amass_splits.items():
@@ -251,7 +264,7 @@ if __name__ == "__main__":
 
     np.random.seed(0)
     flags.debug = args.debug
-    take_num = "diffPol"
+    take_num = "clipped_motion"
     amass_seq_data = {}
     seq_length = -1
 
@@ -260,9 +273,11 @@ if __name__ == "__main__":
     counter = 0
     seq_counter = 0
     db_dataset = args.path
+
+    print('start_load')
     amass_db = joblib.load(db_dataset)
     amass_occlusion = joblib.load("sample_data/amass_copycat_occlusion_v3.pkl")
-
+    print('end_load')
 
     qpos_list = list(amass_db.items())
     np.random.seed(0)
@@ -272,27 +287,41 @@ if __name__ == "__main__":
     smpl_parser_f = SMPL_Parser(model_path="phc/data/smpl", gender="female", use_pca=False, create_transl=False)
 
     amass_seq_data = process_qpos_list(qpos_list)
-     
     
     train_data = {}
     test_data = {}
     valid_data = {}
     for k, v in amass_seq_data.items():
+        # import ipdb; ipdb.set_trace()
         start_name = k.split("-")[1]
         found = False
         for dataset_key in amass_split_dict.keys():
             if start_name.lower().startswith(dataset_key.lower()):
+
                 found = True
                 split = amass_split_dict[dataset_key]
+            
                 if split == "test":
                     test_data[k] = v
                 elif split == "valid":
                     valid_data[k] = v
                 else:
                     train_data[k] = v
+
+                # import ipdb; ipdb.set_trace()
+
+                # if dataset_key in  ['HumanEva', 'MPI_HDM05', 'SFU', 'MPI_mosh'] and split == "train":
+                #     import ipdb; ipdb.set_trace()
+
+                # if dataset_key in  ['Transitions_mocap', 'SSM_synced'] and split == "train":
+                #     import ipdb; ipdb.set_trace()    
+
+
         if not found:
             print(f"Not found!! {start_name}")
 
+
+    import ipdb; ipdb.set_trace()
     joblib.dump(train_data, f"sample_data/amass_{take_num}_train.pkl")
-    joblib.dump(test_data, f"sample_data/amass_{take_num}_test.pkl")
-    joblib.dump(valid_data, f"sample_data/amass_{take_num}_valid.pkl")
+    # joblib.dump(test_data, f"sample_data/amass_{take_num}_test.pkl")
+    # joblib.dump(valid_data, f"sample_data/amass_{take_num}_valid.pkl")

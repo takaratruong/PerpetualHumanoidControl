@@ -26,7 +26,7 @@ max_idxs=5000 # Number of motions in the motion lib # 11626
 collect_start_idx=0
 collect_step_idx=100
 obs_type="ref"
-act_noise=0.02
+act_noise=0.015
 seed=42
 # /move/u/takaraet/PerpetualHumanoidControl/phc/data/amass/pkls/amass_copycat_take5_train.pkl
 

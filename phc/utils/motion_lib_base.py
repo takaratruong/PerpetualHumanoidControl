@@ -23,215 +23,344 @@ from enum import Enum
 USE_CACHE = False
 print("MOVING MOTION DATA TO GPU, USING CACHE:", USE_CACHE)
 
-FAILED_MOT = ['0-CMU_114_114_11_poses', '0-ACCAD_Male2MartialArtsKicks_c3d_G7 -  capoera_poses', '0-CMU_88_88_05_poses', '0-CMU_88_88_07_poses', '0-CMU_127_127_24_poses', '0-ACCAD_Male2Running_c3d_C20 - run to pickup box_poses', '0-CMU_127_127_23_poses', '0-CMU_128_128_11_poses', '0-CMU_128_128_10_poses', '0-CMU_88_88_08_poses', '0-CMU_90_90_36_poses', '0-CMU_90_90_08_poses', '0-CMU_90_90_35_poses', '0-CMU_88_88_09_poses', '0-CMU_90_90_28_poses', '0-CMU_90_90_01_poses', '0-CMU_85_85_02_poses', '0-CMU_140_140_09_poses', '0-KIT_200_Handstand01_poses', '0-CMU_90_90_34_poses', '0-KIT_200_Handstand04_poses', '0-KIT_200_Handstand02_poses', '0-CMU_05_05_06_poses', '0-MPI_Limits_03099_op5_poses', '0-CMU_140_140_08_poses', '0-CMU_90_90_33_poses', '0-CMU_85_85_06_poses', '0-ACCAD_Male1General_c3d_General A8 - Crouch to Lie Down_poses', '0-KIT_200_Handstand06_poses', '0-CMU_85_85_07_poses', '0-CMU_85_85_01_poses', '0-KIT_200_Handstand05_poses', '0-CMU_85_85_08_poses', '0-CMU_90_90_19_poses', '0-CMU_05_05_17_poses', '0-BMLmovi_Subject_71_F_MoSh_Subject_71_F_17_poses', '0-CMU_140_140_04_poses', '0-SFU_0018_0018_Bridge001_poses', '0-SFU_0017_0017_ParkourRoll001_poses', '0-Eyes_Japan_Dataset_aita_pose-16-handstand-aita_poses', '0-CMU_85_85_13_poses', '0-CMU_90_90_29_poses', '0-SFU_0007_0007_Crawling001_poses', '0-MPI_Limits_03099_op4_poses', '0-CMU_111_111_08_poses', '0-CMU_85_85_05_poses', '0-CMU_139_139_18_poses', '0-CMU_77_77_18_poses', '0-CMU_113_113_08_poses', '0-CMU_05_05_18_poses', '0-BioMotionLab_NTroje_rub087_0030_scamper_poses', '0-ACCAD_Male2General_c3d_A12- Crawl Backwards_poses', '0-MPI_Limits_03099_op3_poses', '0-CMU_85_85_04_poses', '0-Eyes_Japan_Dataset_takiguchi_turn-04-cartwheels-takiguchi_poses', '0-Eyes_Japan_Dataset_takiguchi_pose-16-handstand-takiguchi_poses', '0-CMU_85_85_14_poses', '0-MPI_HDM05_tr_HDM_tr_05-03_01_120_poses', '0-MPI_HDM05_dg_HDM_dg_03-03_01_120_poses', '0-MPI_HDM05_dg_HDM_dg_05-03_02_120_poses', '0-MPI_HDM05_tr_HDM_tr_05-03_03_120_poses', '0-MPI_HDM05_tr_HDM_tr_03-03_03_120_poses', '0-MPI_HDM05_dg_HDM_dg_03-03_02_120_poses', '0-MPI_HDM05_dg_HDM_dg_05-03_01_120_poses', '0-Eyes_Japan_Dataset_shiono_pose-16-handstand-shiono_poses', '0-Eyes_Japan_Dataset_hamada_turn-04-cartwheels-hamada_poses', '0-MPI_HDM05_tr_HDM_tr_05-03_02_120_poses', '0-Eyes_Japan_Dataset_shiono_accident-04-damage right leg-shiono_poses', '0-MPI_HDM05_mm_HDM_mm_03-03_01_120_poses', '0-BioMotionLab_NTroje_rub009_0030_scamper1_poses', '0-MPI_HDM05_tr_HDM_tr_03-03_01_120_poses', '0-MPI_HDM05_tr_HDM_tr_03-03_02_120_poses', '0-CMU_85_85_12_poses', '0-MPI_HDM05_tr_HDM_tr_05-01_03_120_poses', '0-MPI_HDM05_mm_HDM_mm_03-03_02_120_poses', '0-MPI_HDM05_mm_HDM_mm_05-03_02_120_poses', '0-MPI_HDM05_tr_HDM_tr_03-02_04_120_poses', '0-TotalCapture_s4_freestyle3_poses', '0-MPI_HDM05_dg_HDM_dg_03-09_01_120_poses', '0-BioMotionLab_NTroje_rub010_0029_scamper_poses', '0-TotalCapture_s5_freestyle3_poses', '0-BioMotionLab_NTroje_rub011_0030_scamper_poses', '0-MPI_HDM05_tr_HDM_tr_05-03_04_120_poses', '0-ACCAD_Male2MartialArtsExtended_c3d_Extended 3_poses', '0-BioMotionLab_NTroje_rub012_0031_scamper_poses', '0-BioMotionLab_NTroje_rub048_0030_scamper_poses']
+# COMPLETED ##################################################################################################### 
 
-diff_failed = [
-"0-ACCAD_Female1Running_c3d_C7 -  run backwards_poses",
-"0-CMU_39_39_13_poses",
-"0-CMU_108_108_27_poses",
-"0-ACCAD_Male2MartialArtsStances_c3d_D13 -crouch to ready_poses",
-"0-CMU_49_49_06_poses",
-"0-MPI_mosh_00031_misc_poses",
-"0-ACCAD_Female1Running_c3d_C8 -  run backwards to stand_poses",
-"0-BioMotionLab_NTroje_rub058_0030_scamper_poses",
-"0-HumanEva_S3_ThrowCatch_1_poses",
-"0-BioMotionLab_NTroje_rub072_0030_scamper_poses",
-"0-Eyes_Japan_Dataset_kanno_pose-11-bended knees-kanno_poses",
-"0-Eyes_Japan_Dataset_aita_gesture_etc-10-snip nail-aita_poses",
-"0-Eyes_Japan_Dataset_aita_pose-04-drank-aita_poses",
-"0-BioMotionLab_NTroje_rub067_0021_catching_and_throwing_poses",
-"0-BMLhandball_S10_Expert_Trial_upper_left_right_190_poses",
-"0-SFU_0018_0018_XinJiang003_poses",
-"0-CMU_82_82_17_poses",
-"0-BMLhandball_S07_Expert_Trial_upper_right_left_177_poses",
-"0-CMU_113_113_17_poses",
-"0-BioMotionLab_NTroje_rub061_0027_circle_walk_poses",
-"0-ACCAD_s011_walkdog_poses",
-"0-CMU_54_54_18_poses",
-"0-BioMotionLab_NTroje_rub072_0027_circle_walk_poses",
-"0-ACCAD_Male2MartialArtsExtended_c3d_Extended 2_poses",
-"0-BioMotionLab_NTroje_rub012_0028_circle_walk_poses",
-"0-BioMotionLab_NTroje_rub076_0027_circle_walk_poses",
-"0-BioMotionLab_NTroje_rub050_0014_knocking2_poses",
-"0-BioMotionLab_NTroje_rub029_0017_lifting_light1_poses",
-"0-CMU_70_70_06_poses",
-"0-BioMotionLab_NTroje_rub009_0013_knocking1_poses",
-"0-BioMotionLab_NTroje_rub097_0013_knocking1_poses",
-"0-CMU_05_05_19_poses",
-"0-BioMotionLab_NTroje_rub072_0018_lifting_light2_poses",
-"0-BioMotionLab_NTroje_rub103_0020_lifting_heavy2_poses",
-"0-BMLmovi_Subject_25_F_MoSh_Subject_25_F_12_poses",
-"0-BioMotionLab_NTroje_rub075_0017_lifting_light1_poses",
-"0-BioMotionLab_NTroje_rub034_0020_lifting_heavy2_poses",
-"0-KIT_3_kneel_up_with_left_hand10_poses",
-"0-KIT_379_push_recovery_left08_poses",
-"0-KIT_3_jump_back02_poses",
-"0-KIT_379_push_recovery_left07_poses",
-"0-BMLmovi_Subject_86_F_MoSh_Subject_86_F_19_poses",
-"0-BioMotionLab_NTroje_rub059_0014_knocking2_poses",
-"0-BioMotionLab_NTroje_rub104_0019_lifting_heavy1_poses",
-"0-KIT_3_inspect_shoe_sole08_poses",
-"0-BioMotionLab_NTroje_rub112_0013_knocking1_poses",
-"0-BMLhandball_S10_Expert_Trial_upper_right_108_poses",
-"0-BMLhandball_S01_Expert_Trial_upper_right_179_poses",
-"0-BioMotionLab_NTroje_rub006_0009_knocking1_poses",
-"0-KIT_3_inspect_shoe_sole05_poses",
-"0-BMLhandball_S06_Novice_Trial_upper_right_left_148_poses",
-"0-BioMotionLab_NTroje_rub098_0020_lifting_heavy2_poses",
-"0-BMLmovi_Subject_63_F_MoSh_Subject_63_F_11_poses",
-"0-ACCAD_Female1Walking_c3d_B21 s3 - put down box to walk_poses",
-"0-BMLmovi_Subject_17_F_MoSh_Subject_17_F_5_poses",
-"0-CMU_139_139_10_poses",
-"0-BioMotionLab_NTroje_rub034_0018_lifting_light2_poses",
-"0-CMU_05_05_08_poses",
-"0-ACCAD_Male2Running_c3d_C18 - run to hop to walk_poses",
-"0-BioMotionLab_NTroje_rub093_0014_knocking2_poses",
-"0-BMLmovi_Subject_72_F_MoSh_Subject_72_F_2_poses",
-"0-BMLmovi_Subject_8_F_MoSh_Subject_8_F_19_poses",
-"0-CMU_102_102_05_poses",
-"0-CMU_102_102_07_poses",
-"0-KIT_167_run01_poses",
-"0-KIT_9_run04_poses",
-"0-BMLmovi_Subject_4_F_MoSh_Subject_4_F_19_poses",
-"0-CMU_09_09_07_poses",
-"0-CMU_09_09_06_poses",
-"0-CMU_35_35_20_poses",
-"0-CMU_128_128_03_poses",
-"0-CMU_35_35_17_poses",
-"0-CMU_102_102_02_poses",
-"0-CMU_78_78_19_poses",
-"0-CMU_22_23_Rory_22_25_poses",
-"0-CMU_02_02_03_poses",
-"0-CMU_102_102_14_poses",
-"0-MPI_HDM05_dg_HDM_dg_06-03_03_120_poses",
-"0-CMU_127_127_29_poses",
-"0-CMU_22_23_justin_22_24_poses",
-"0-EKUT_300_PushBK_01_poses",
-"0-ACCAD_Male2Running_c3d_C3 - run_poses",
-"0-Eyes_Japan_Dataset_kanno_walk-21-one leg-kanno_poses",
-"0-CMU_56_56_08_poses",
-"0-MPI_HDM05_mm_HDM_mm_03-05_02_120_poses",
-"0-MPI_HDM05_tr_HDM_tr_03-05_03_120_poses",
-"0-MPI_HDM05_bk_HDM_bk_03-05_02_120_poses",
-"0-CMU_144_144_32_poses",
-"0-CMU_17_17_09_poses",
-"0-CMU_17_17_06_poses",
-"0-CMU_55_55_22_poses",
-"0-CMU_41_41_06_poses",
-"0-BioMotionLab_NTroje_rub066_0030_rom_poses",
-"0-BioMotionLab_NTroje_rub069_0031_rom_poses",
-"0-BioMotionLab_NTroje_rub087_0031_rom_poses",
-"0-MPI_mosh_00096_misc_2_poses",
-"0-BioMotionLab_NTroje_rub109_0017_lifting_light1_poses",
-"0-BioMotionLab_NTroje_rub099_0013_knocking1_poses",
-"0-BioMotionLab_NTroje_rub012_0020_lifting_heavy2_poses",
-"0-BMLhandball_S09_Novice_Trial_upper_right_left_110_poses",
-"0-CMU_41_41_07_poses",
-"0-BioMotionLab_NTroje_rub049_0017_lifting_heavy1_poses",
-"0-BMLhandball_S06_Novice_Trial_upper_right_217_poses",
-"0-BioMotionLab_NTroje_rub057_0015_knocking2_poses",
-"0-BioMotionLab_NTroje_rub108_0018_lifting_light2_poses",
-"0-BioMotionLab_NTroje_rub035_0013_knocking1_poses",
-"0-BioMotionLab_NTroje_rub028_0013_knocking1_poses",
-"0-BioMotionLab_NTroje_rub109_0013_knocking1_poses",
-"0-BioMotionLab_NTroje_rub051_0013_knocking1_poses",
+
+cartwheels = [
+'0-Eyes_Japan_Dataset_takiguchi_turn-04-cartwheels-takiguchi_poses', 
+'0-Eyes_Japan_Dataset_hamada_turn-04-cartwheels-hamada_poses', 
+'0-ACCAD_Male2MartialArtsExtended_c3d_Extended 3_poses', # capoaera + cartwheel 
+'0-BioMotionLab_NTroje_rub009_0030_scamper1_poses', # cartwheel into weird kicks 
+'0-BioMotionLab_NTroje_rub011_0030_scamper_poses', # carthweels, bridges, sit on the ground, into bridge 
+'0-BioMotionLab_NTroje_rub087_0030_scamper_poses', #spin in circles into cartwheel 
+'0-CMU_88_88_07_poses',  # cartwheel 
+] # only last 2 succeeded '0-BioMotionLab_NTroje_rub087_0030_scamper_poses' '0-CMU_88_88_07_poses'
+
+# cartwheels_failed2_subset1=['0-ACCAD_Male2MartialArtsExtended_c3d_Extended 3_poses', 
+#                             '0-BioMotionLab_NTroje_rub009_0030_scamper1_poses', ] # all failed 
+
+cartwheels_failed2_subset2 =['0-BioMotionLab_NTroje_rub011_0030_scamper_poses', 
+                            '0-Eyes_Japan_Dataset_hamada_turn-04-cartwheels-hamada_poses', 
+                            '0-Eyes_Japan_Dataset_takiguchi_turn-04-cartwheels-takiguchi_poses'] # last one success 
+
+cartwheels_failed3_subset1 = ['0-ACCAD_Male2MartialArtsExtended_c3d_Extended 3_poses'] # good!
+cartwheels_failed3_subset2 = ['0-BioMotionLab_NTroje_rub009_0030_scamper1_poses'] # good "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset2/Humanoid.pth"
+
+cartwheels_failed3_subset3 = ['0-BioMotionLab_NTroje_rub011_0030_scamper_poses'] # good 
+
+cartwheels_failed3_subset4 = ['0-Eyes_Japan_Dataset_hamada_turn-04-cartwheels-hamada_poses'] # good
+
+handstands = [
+'0-KIT_200_Handstand01_poses', 
+'0-KIT_200_Handstand04_poses', 
+'0-KIT_200_Handstand02_poses',
+'0-KIT_200_Handstand05_poses', 
+'0-KIT_200_Handstand06_poses',
+'0-Eyes_Japan_Dataset_aita_pose-16-handstand-aita_poses', 
+'0-Eyes_Japan_Dataset_takiguchi_pose-16-handstand-takiguchi_poses', 
+'0-Eyes_Japan_Dataset_shiono_pose-16-handstand-shiono_poses',
+'0-MPI_Limits_03099_op4_poses', #handstand 
+'0-MPI_Limits_03099_op5_poses', #handstand with splits 
+# '0-CMU_85_85_05_poses', #handstand with kicks 
+# '0-CMU_85_85_12_poses', #shuffling with single handstand 
+# '0-CMU_85_85_13_poses', #handstand with falling action to recovery 
+]
+handstands_failed2_subset1 = ['0-CMU_85_85_05_poses'] # good! 
+handstands_failed2_subset2 = ['0-CMU_85_85_12_poses', '0-CMU_85_85_13_poses'] # FAILED  
+
+handstands_failed3_subset1 = ['0-CMU_85_85_12_poses'] # good! /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed3_subset1_retry/Humanoid.pth
+handstands_failed3_subset2 = ['0-CMU_85_85_13_poses'] # good! 
+
+# RUNNING
+ground2getup = [ 
+'0-BMLmovi_Subject_71_F_MoSh_Subject_71_F_17_poses', #sit on the ground and row, then stand up 
+'0-CMU_111_111_08_poses', # ground to get up 
+# '0-CMU_139_139_18_poses', # ground to get up 
+'0-CMU_140_140_04_poses', # ground to get up
+'0-CMU_140_140_08_poses',  # ground to get up
+'0-CMU_140_140_09_poses',  # ground to get up
+'0-CMU_114_114_11_poses', #floor to get up and walk 
+# '0-Eyes_Japan_Dataset_shiono_accident-04-damage right leg-shiono_poses', # limp then ground to get up 
+# '0-TotalCapture_s4_freestyle3_poses', # stumbling forwards, then get up from the ground 
+# '0-MPI_Limits_03099_op3_poses', # bridge into get up 
+'0-SFU_0018_0018_Bridge001_poses', #bend backward into bridge with leg raise 
+# '0-TotalCapture_s5_freestyle3_poses',  # run around, throw objects, get on the ground then get up 
+'0-CMU_77_77_18_poses', #get up off the ground
+] # /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup
+ground2getup_failed2_subset1 = ['0-TotalCapture_s5_freestyle3_poses',  '0-MPI_Limits_03099_op3_poses', '0-CMU_139_139_18_poses'] # /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed2_subset1/Humanoid.pth
+ground2getup_failed2_subset2 = ['0-TotalCapture_s4_freestyle3_poses' ,'0-Eyes_Japan_Dataset_shiono_accident-04-damage right leg-shiono_poses']  # /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed2_subset2/Humanoid.pth
+ground2getup_failed3_subset1 = ['0-MPI_Limits_03099_op3_poses'] # "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed3_subset1/Humanoid.pth"
+
+
+
+back_flips = [
+'0-CMU_90_90_19_poses', # crawl forward to backflip 
+'0-CMU_90_90_28_poses', # ground twirl (maybe with around the world? other) 
+# '0-CMU_90_90_29_poses',  #cartwheel into donkey kicks into backflip 
+# '0-CMU_85_85_14_poses', #backflip with one arm handstand 
+# '0-CMU_88_88_05_poses', # cartwheel into backflip 
+'0-CMU_88_88_08_poses', #backflip 
+'0-CMU_88_88_09_poses', #backflip 
+'0-CMU_90_90_08_poses', #sideflip 
+'0-CMU_85_85_01_poses', #backflip 
+'0-CMU_85_85_02_poses', #backflip 
+]
+backflips_failed2_subset1 = ['0-CMU_85_85_14_poses'] #  good! len 743 
+backflips_failed2_subset2 = ['0-CMU_90_90_29_poses'] # good! 
+backflips_failed2_subset3 = ['0-CMU_88_88_05_poses'] # good
+
+
+
+roll = [
+'0-CMU_90_90_33_poses',  #roll on ground forward
+'0-CMU_90_90_34_poses',  #roll on ground forward
+'0-CMU_90_90_35_poses',  #roll on ground forward
+'0-CMU_90_90_36_poses',  #roll on ground forward
+'0-CMU_127_127_23_poses', # roll forward (tumble)
+'0-CMU_127_127_24_poses', # roll forward (tumble)
+'0-CMU_128_128_10_poses', # roll forward (tumble)
+'0-CMU_128_128_11_poses', # roll forward (tumble)
+'0-CMU_90_90_01_poses',  #rolling backwards on the ground 
+# '0-SFU_0017_0017_ParkourRoll001_poses', # roll forwards
+] # Good!  
+
+break_dance = [
+'0-CMU_85_85_08_poses', #around the world with legs
+'0-CMU_85_85_04_poses', #break dance with single hand up (prob train seperately)
+] # good! 
+
+front_flips =[ 
+'0-CMU_85_85_06_poses', #front flip 
+'0-CMU_85_85_07_poses', #front flip 
+] # good! 
+
+floor_poses = [
+'0-ACCAD_Male1General_c3d_General A8 - Crouch to Lie Down_poses', 
+# '0-SFU_0007_0007_Crawling001_poses', 
+'0-ACCAD_Male2General_c3d_A12- Crawl Backwards_poses', # army crawl backwards
+] # good! 
+
+sprints=  [
+'0-ACCAD_Male2Running_c3d_C20 - run to pickup box_poses', #sprint forwards pickup box 
+# '0-MPI_HDM05_tr_HDM_tr_05-03_01_120_poses', # limp into sprints into cartwheels 
+# '0-MPI_HDM05_tr_HDM_tr_05-03_02_120_poses', # limp into sprints into cartwheels 
+# '0-MPI_HDM05_tr_HDM_tr_05-03_03_120_poses', # limp into sprints into cartwheels 
+# '0-MPI_HDM05_dg_HDM_dg_05-03_01_120_poses', # limping into sudden sprints into cartwheel 
+# '0-MPI_HDM05_dg_HDM_dg_05-03_02_120_poses', # sudden sprints 
+# 0-MPI_HDM05_mm_HDM_mm_05-03_02_120_poses', # lurch forward and limp, sudden sprints, carrtwheel 
 ]
 
-actual_failed_motions =  [
-'0-ACCAD_Male2MartialArtsStances_c3d_D13 -crouch to ready_poses' ,
-'0-CMU_49_49_06_poses' ,
-'0-MPI_mosh_00031_misc_poses' ,
-'0-Eyes_Japan_Dataset_kanno_pose-11-bended knees-kanno_poses' ,
-'0-Eyes_Japan_Dataset_aita_gesture_etc-10-snip nail-aita_poses' ,
-'0-Eyes_Japan_Dataset_aita_pose-04-drank-aita_poses' ,
-'0-SFU_0018_0018_XinJiang003_poses' ,
-'0-CMU_113_113_17_poses' ,
-'0-CMU_54_54_18_poses',
-'0-CMU_05_05_19_poses' ,
-'0-BMLmovi_Subject_25_F_MoSh_Subject_25_F_12_poses' ,
-'0-BioMotionLab_NTroje_rub034_0020_lifting_heavy2_poses',
-'0-KIT_3_kneel_up_with_left_hand10_poses' ,
-'0-KIT_379_push_recovery_left08_poses',
-'0-KIT_379_push_recovery_left07_poses' ,
-'0-KIT_3_inspect_shoe_sole08_poses' ,
-'0-KIT_3_inspect_shoe_sole05_poses',
-'0-BMLhandball_S06_Novice_Trial_upper_right_left_148_poses' ,
-'0-BMLmovi_Subject_63_F_MoSh_Subject_63_F_11_poses' ,
-'0-BMLmovi_Subject_17_F_MoSh_Subject_17_F_5_poses' ,
-'0-CMU_05_05_08_poses' ,
-'0-ACCAD_Male2Running_c3d_C18 - run to hop to walk_poses' ,
-'0-BMLmovi_Subject_72_F_MoSh_Subject_72_F_2_poses' ,
-'0-BMLmovi_Subject_8_F_MoSh_Subject_8_F_19_poses',
-'0-CMU_102_102_07_poses' ,
-'0-KIT_167_run01_poses' ,
-'0-KIT_9_run04_poses',
-'0-CMU_128_128_03_poses',
-'0-CMU_127_127_29_poses' ,
-'0-ACCAD_Male2Running_c3d_C3 - run_poses',
-'0-Eyes_Japan_Dataset_kanno_walk-21-one leg-kanno_poses',
-'0-CMU_56_56_08_poses' ,
-'0-MPI_HDM05_mm_HDM_mm_03-05_02_120_poses' ,
-'0-MPI_HDM05_tr_HDM_tr_03-05_03_120_poses',
-'0-CMU_55_55_22_poses',
-'0-BMLhandball_S06_Novice_Trial_upper_right_217_poses']
 
 
-#'0-ACCAD_Male2MartialArtsStances_c3d_D13 -crouch to ready_poses' '0-CMU_49_49_06_poses' '0-MPI_mosh_00031_misc_poses' '0-Eyes_Japan_Dataset_kanno_pose-11-bended knees-kanno_poses'
-#5-10 '0-Eyes_Japan_Dataset_aita_pose-04-drank-aita_poses' '0-CMU_113_113_17_poses' '0-CMU_54_54_18_poses' '0-CMU_05_05_19_poses'
-# 10-15 '0-KIT_3_kneel_up_with_left_hand10_poses' '0-KIT_379_push_recovery_left08_poses' '0-KIT_379_push_recovery_left07_poses'
-
-# '0-KIT_379_push_recovery_left07_poses' ,
-# '0-KIT_3_inspect_shoe_sole08_poses' ,
-# '0-KIT_3_inspect_shoe_sole05_poses',
-# '0-BMLhandball_S06_Novice_Trial_upper_right_left_148_poses' ,
-# '0-BMLmovi_Subject_63_F_MoSh_Subject_63_F_11_poses' ,
-
-# 20-25 '0-KIT_3_kneel_up_with_left_hand10_poses' '0-KIT_379_push_recovery_left08_poses' '0-KIT_379_push_recovery_left07_poses'
-# 25-30 '0-KIT_167_run01_poses' '0-KIT_9_run04_poses' '0-ACCAD_Male2Running_c3d_C3 - run_poses'
-# 30-36 '0-Eyes_Japan_Dataset_kanno_walk-21-one leg-kanno_poses' '0-CMU_56_56_08_poses' '0-MPI_HDM05_mm_HDM_mm_03-05_02_120_poses' '0-MPI_HDM05_tr_HDM_tr_03-05_03_120_poses' '0-BMLhandball_S06_Novice_Trial_upper_right_217_poses'
-
-final_failed = [
-
-'0-ACCAD_Male2MartialArtsStances_c3d_D13 -crouch to ready_poses', # crouch
-'0-Eyes_Japan_Dataset_kanno_pose-11-bended knees-kanno_poses', #crouch 
-'0-KIT_3_kneel_up_with_left_hand10_poses', #crouch 
-'0-KIT_3_kneel_up_with_left_hand10_poses', #crouch 
-'0-BMLmovi_Subject_63_F_MoSh_Subject_63_F_11_poses' ,  # crouch 
-'0-CMU_54_54_18_poses',  # crouched forward, motions
-
-'0-Eyes_Japan_Dataset_aita_pose-04-drank-aita_poses', #usnteady walking
-'0-MPI_mosh_00031_misc_poses',  # skittish walk 
-'0-CMU_113_113_17_poses', # side walk 
-
-'0-CMU_56_56_08_poses' , # walk to run to walk, with leaps in the middle 
-'0-CMU_05_05_19_poses',  # jump with spin 
-'0-CMU_49_49_06_poses',  # cartwheel 
-'0-MPI_HDM05_mm_HDM_mm_03-05_02_120_poses', # jumping jacks , lunge jumps (failure) 
-'0-MPI_HDM05_tr_HDM_tr_03-05_03_120_poses', # lunge jups, leg raises 
-
-'0-KIT_379_push_recovery_left08_poses', # push recovery
-'0-KIT_379_push_recovery_left07_poses', # push recovery
-'0-KIT_379_push_recovery_left07_poses' , # push recovery
-'0-KIT_379_push_recovery_left08_poses' , # push recovery
-'0-KIT_379_push_recovery_left07_poses', # push recovery
-
-'0-Eyes_Japan_Dataset_kanno_walk-21-one leg-kanno_poses', # one leg hops 
-'0-KIT_3_inspect_shoe_sole08_poses' , # one leg balance 
-'0-KIT_3_inspect_shoe_sole05_poses', # one leg balance
-'0-BMLhandball_S06_Novice_Trial_upper_right_217_poses', # one leg balance to lunge forward
-'0-BMLhandball_S06_Novice_Trial_upper_right_left_148_poses' # one leg balance to lunge forward
+kicks_punches = [
+# '0-MPI_HDM05_tr_HDM_tr_03-02_04_120_poses', # kicks and punches 
+# '0-MPI_HDM05_tr_HDM_tr_05-01_03_120_poses', # kicks and punches 
+'0-ACCAD_Male2MartialArtsKicks_c3d_G7 -  capoera_poses', #spin kick 
+# '0-BioMotionLab_NTroje_rub048_0030_scamper_poses' # sided leg raises into kicks in all directions into balance on one foot onto ground then get up 
 ]
 
-run = ['0-KIT_167_run01_poses', 
-'0-KIT_9_run04_poses' ,
-'0-ACCAD_Male2Running_c3d_C3 - run_poses']
+weird_walks = [
+# '0-BioMotionLab_NTroje_rub010_0029_scamper_poses', # bizare walks into crab walks backwards into rolling on the ground
+'0-BioMotionLab_NTroje_rub012_0031_scamper_poses', # obscure walks 
+]
+scamper_failed2 = ['0-BioMotionLab_NTroje_rub048_0030_scamper_poses', '0-BioMotionLab_NTroje_rub010_0029_scamper_poses'] # need to rerun 
+scamper_failed3 = ['0-BioMotionLab_NTroje_rub048_0030_scamper_poses']
 
 
-CARTWHEEL = ["0-Eyes_Japan_Dataset_takiguchi_turn-04-cartwheels-takiguchi_poses", "0-Eyes_Japan_Dataset_takiguchi_turn-04-cartwheels-takiguchi_poses"]
-FLIPS = ["0-CMU_90_90_08_poses","0-CMU_90_90_19_poses"]
+policy2motion = {
+    # groun2getup
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed3_subset1/Humanoid.pth": ['0-MPI_Limits_03099_op3_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed2_subset2/Humanoid.pth":  ['0-TotalCapture_s4_freestyle3_poses' ,'0-Eyes_Japan_Dataset_shiono_accident-04-damage right leg-shiono_poses'], 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed2_subset1/Humanoid.pth": ['0-TotalCapture_s5_freestyle3_poses',  '0-CMU_139_139_18_poses'], 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup/Humanoid.pth": ['0-BMLmovi_Subject_71_F_MoSh_Subject_71_F_17_poses', '0-CMU_111_111_08_poses', '0-CMU_140_140_04_poses', '0-CMU_140_140_08_poses', '0-CMU_140_140_09_poses', '0-CMU_114_114_11_poses', '0-SFU_0018_0018_Bridge001_poses', '0-CMU_77_77_18_poses'],
+    
+    # handstands 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_handstand_failed3_subset2/Humanoid.pth": ['0-CMU_85_85_13_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_handstands_failed3_subset1_retry/Humanoid.pth": ['0-CMU_85_85_12_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_handstand_failed2_subset1/Humanoid.pth": ['0-CMU_85_85_05_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_shape_pnn_handstand/Humanoid.pth": ['0-KIT_200_Handstand01_poses', '0-KIT_200_Handstand04_poses', '0-KIT_200_Handstand02_poses','0-KIT_200_Handstand05_poses', '0-KIT_200_Handstand06_poses', '0-Eyes_Japan_Dataset_aita_pose-16-handstand-aita_poses', '0-Eyes_Japan_Dataset_takiguchi_pose-16-handstand-takiguchi_poses', '0-Eyes_Japan_Dataset_shiono_pose-16-handstand-shiono_poses', '0-MPI_Limits_03099_op4_poses',  '0-MPI_Limits_03099_op5_poses'],
 
-# "0-CMU_90_90_08_poses", # flip 
-# "0-CMU_90_90_19_poses", # backflip
+    # cartwheels
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset4/Humanoid.pth": ['0-Eyes_Japan_Dataset_hamada_turn-04-cartwheels-hamada_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset3/Humanoid_00048000.pth": ['0-BioMotionLab_NTroje_rub011_0030_scamper_poses'], 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset2/Humanoid.pth": ['0-BioMotionLab_NTroje_rub009_0030_scamper1_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset1/Humanoid.pth": ['0-ACCAD_Male2MartialArtsExtended_c3d_Extended 3_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed2_subset2/Humanoid.pth": ['0-Eyes_Japan_Dataset_takiguchi_turn-04-cartwheels-takiguchi_poses'], 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels/Humanoid.pth": ['0-BioMotionLab_NTroje_rub087_0030_scamper_poses', '0-CMU_88_88_07_poses'],
+
+    #backflips
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_backflips_failed2_subset3/Humanoid.pth": ['0-CMU_88_88_05_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_backflips_failed2_subset2/Humanoid.pth": ['0-CMU_90_90_29_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_backflips_failed2_subset1/Humanoid.pth": ['0-CMU_85_85_14_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_backflips/Humanoid.pth": [ '0-CMU_90_90_19_poses', '0-CMU_90_90_28_poses', '0-CMU_88_88_08_poses', '0-CMU_88_88_09_poses', '0-CMU_90_90_08_poses', '0-CMU_85_85_01_poses', '0-CMU_85_85_02_poses'],
+
+    # rolls 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_roll/Humanoid.pth": ['0-CMU_90_90_33_poses', '0-CMU_90_90_34_poses', '0-CMU_90_90_35_poses',  '0-CMU_90_90_36_poses',  '0-CMU_127_127_23_poses', '0-CMU_127_127_24_poses', '0-CMU_128_128_10_poses', '0-CMU_128_128_11_poses', '0-CMU_90_90_01_poses'],
+
+    # scamper 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_scamper_failed3/Humanoid.pth": ['0-BioMotionLab_NTroje_rub048_0030_scamper_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_scamper_failed2/Humanoid.pth": ['0-BioMotionLab_NTroje_rub010_0029_scamper_poses'], 
+
+    # weirld walks
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_weirdwalks/Humanoid.pth": ['0-BioMotionLab_NTroje_rub012_0031_scamper_poses'],
+
+    # kicks punches 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_kickspunches/Humanoid.pth": ['0-ACCAD_Male2MartialArtsKicks_c3d_G7 -  capoera_poses'],
+
+    # sprints
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_sprints/Humanoid.pth": ['0-ACCAD_Male2Running_c3d_C20 - run to pickup box_poses'],
+
+    # floor_poses
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_floorposes/Humanoid.pth": ['0-ACCAD_Male1General_c3d_General A8 - Crouch to Lie Down_poses', '0-ACCAD_Male2General_c3d_A12- Crawl Backwards_poses'], 
+
+    # front_flips 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_frontflips/Humanoid.pth": [ '0-CMU_85_85_06_poses', '0-CMU_85_85_07_poses'],
+
+    # break_dance 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_breakdance/Humanoid.pth": ['0-CMU_85_85_08_poses', '0-CMU_85_85_04_poses'],
+
+
+    # New stuff
+    # ballet 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ballet/Humanoid.pth": ["0-CMU_05_05_06_poses", "0-CMU_05_05_17_poses", "0-CMU_05_05_18_poses"] , 
+
+
+    # second_floor 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_second_floor/Humanoid.pth": ["0-SFU_0007_0007_Crawling001_poses","0-MPI_HDM05_dg_HDM_dg_03-09_01_120_poses"  ], 
+
+    # second_kicks_punches
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_second_kicks_punches/Humanoid.pth": ["0-MPI_HDM05_tr_HDM_tr_05-01_03_120_poses"], 
+
+    # second sprints 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_second_sprints/Humanoid.pth": [ "0-MPI_HDM05_dg_HDM_dg_05-03_02_120_poses"],
+
+    # second roll 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_second_roll/Humanoid.pth": ["0-SFU_0017_0017_ParkourRoll001_poses"],
+
+    # throw 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_throw/Humanoid.pth": ["0-MPI_HDM05_dg_HDM_dg_03-03_01_120_poses", "0-MPI_HDM05_tr_HDM_tr_03-03_03_120_poses", "0-MPI_HDM05_dg_HDM_dg_03-03_02_120_poses", "0-MPI_HDM05_mm_HDM_mm_03-03_01_120_poses", ] ,
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_throw_failed1_subset1/Humanoid.pth":  ['0-MPI_HDM05_mm_HDM_mm_03-03_02_120_poses'], 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_throw_failed1_subset2/Humanoid.pth":  ['0-MPI_HDM05_tr_HDM_tr_03-03_01_120_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_throw_failed1_subset3/Humanoid.pth": ['0-MPI_HDM05_tr_HDM_tr_03-03_02_120_poses'], 
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_limp/Humanoid.pth": ["0-MPI_HDM05_tr_HDM_tr_05-03_02_120_poses", "0-MPI_HDM05_dg_HDM_dg_05-03_01_120_poses", "0-MPI_HDM05_tr_HDM_tr_05-03_03_120_poses", "0-MPI_HDM05_tr_HDM_tr_05-03_01_120_poses", ], 
+
+
+    # thirs stuff 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_thrid_sprint/Humanoid.pth" : ['0-MPI_HDM05_mm_HDM_mm_05-03_02_120_poses'],
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_third_kicks_punches/Humanoid.pth": ['0-MPI_HDM05_tr_HDM_tr_03-02_04_120_poses'],
+
+
+    # last stuff 
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_cartwheel/Humanoid.pth" : ['0-CMU_49_49_08_poses'], # cartwheel # good!
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_spinjump/Humanoid.pth" : ['0-CMU_87_87_01_poses'], # spin jump (use ballet) # good! 
+
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_basketball/Humanoid.pth": ['0-MPI_HDM05_tr_HDM_tr_06-01_01_120_poses'], # basketball/volleyball poses and throws #use throw # good! 
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_floor/Humanoid.pth" : ['0-TotalCapture_s4_freestyle1_poses'], # frog jumps, into crawl on the ground, into stand up (# use second_floor) # good
+
+
+
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_throw/Humanoid.pth" : ['0-MPI_HDM05_dg_HDM_dg_03-03_03_120_poses'], # get up throw sit down throw #use throw # good : keep training 
+
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed1_actual/Humanoid.pth": ['0-BMLmovi_Subject_47_F_MoSh_Subject_47_F_21_poses'], # "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed1_actual/Humanoid.pth"
+
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed2/Humanoid.pth" : ['0-BMLmovi_Subject_3_F_MoSh_Subject_3_F_17_poses'],  # /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed2/Humanoid.pth
+    "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed3/Humanoid.pth" : ['0-BMLmovi_Subject_76_F_MoSh_Subject_76_F_20_poses'],  # "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed3/Humanoid.pth"
+
+
+}
+
+
+
+# SECOND COMPLETED (because we ned to train the "validation" set)
+ballet =[
+"0-CMU_05_05_06_poses", # ballet, spins into spin jump
+"0-CMU_05_05_17_poses", # leap into backwards leap 
+"0-CMU_05_05_18_poses"] # spin jump $ good! 
+
+second_floor=[
+"0-SFU_0007_0007_Crawling001_poses", # floor poses 
+"0-MPI_HDM05_dg_HDM_dg_03-09_01_120_poses" # situps into pushups into pikes 
+] # good!
+
+second_kicks_punches =[
+"0-MPI_HDM05_tr_HDM_tr_05-01_03_120_poses" # kicks and punches
+] # good! 
+
+second_sprints = [ "0-MPI_HDM05_dg_HDM_dg_05-03_02_120_poses"] # good! 
+
+second_roll = [
+"0-SFU_0017_0017_ParkourRoll001_poses"  # roll forwards # good! 
+]
+
+throw =[
+"0-MPI_HDM05_dg_HDM_dg_03-03_01_120_poses", # sit down throw, stand up throw
+"0-MPI_HDM05_tr_HDM_tr_03-03_03_120_poses", # sit down throw, stand up throw
+"0-MPI_HDM05_dg_HDM_dg_03-03_02_120_poses", # sit down throw, stand up throw
+"0-MPI_HDM05_mm_HDM_mm_03-03_01_120_poses", # sit down throw, stand up throw
+# "0-MPI_HDM05_tr_HDM_tr_03-03_01_120_poses", # sit down throw, stand up throw
+# "0-MPI_HDM05_tr_HDM_tr_03-03_02_120_poses", #  sit down throw, stand up throw
+# "0-MPI_HDM05_mm_HDM_mm_03-03_02_120_poses" 
+]# sit down throw, stand up throw
+
+throw_failed1_subset1 = ['0-MPI_HDM05_mm_HDM_mm_03-03_02_120_poses'] # good! 
+throw_failed1_subset2 = ['0-MPI_HDM05_tr_HDM_tr_03-03_01_120_poses'] # good! 
+throw_failed1_subset3 = ['0-MPI_HDM05_tr_HDM_tr_03-03_02_120_poses'] # good! 
+# Running 
+
+
+limp =[
+# "0-MPI_HDM05_tr_HDM_tr_05-03_04_120_poses", # limp into sprints into cartwheels 
+"0-MPI_HDM05_tr_HDM_tr_05-03_02_120_poses",  # limp into sprints into cartwheels 
+"0-MPI_HDM05_dg_HDM_dg_05-03_01_120_poses", # limping into sudden sprints into cart
+"0-MPI_HDM05_tr_HDM_tr_05-03_03_120_poses", # limp into sprints into cartwheels 
+"0-MPI_HDM05_tr_HDM_tr_05-03_01_120_poses", # limp into sprints into cartwheels 
+ ] 
+
+limp_failed1_subset1 = ["0-MPI_HDM05_tr_HDM_tr_05-03_04_120_poses"] # 
+
+
+
+# THIRD COMPLETED (forgot some motions)
+third_sprints = ['0-MPI_HDM05_mm_HDM_mm_05-03_02_120_poses']
+third_kicks_punches = ['0-MPI_HDM05_tr_HDM_tr_03-02_04_120_poses']
+
+
+
+
+# fourth layer (some still failed so adding them back) 
+fourth_cartwheel = ['0-CMU_49_49_08_poses'] # cartwheel # good!
+fourth_spinjump = ['0-CMU_87_87_01_poses'] # spin jump (use ballet) # good! 
+
+fourth_basketball = ['0-MPI_HDM05_tr_HDM_tr_06-01_01_120_poses'] # basketball/volleyball poses and throws #use throw # good! 
+
+fourth_floor = ['0-TotalCapture_s4_freestyle1_poses'] # frog jumps, into crawl on the ground, into stand up (# use second_floor) # good
+
+
+
+
+fourth_throw = ['0-MPI_HDM05_dg_HDM_dg_03-03_03_120_poses'] # get up throw sit down throw #use throw # good : keep training 
+
+
+fourth_sitdown =[
+'0-BMLmovi_Subject_47_F_MoSh_Subject_47_F_21_poses', # sit down cross legged to get up  # use throw
+'0-BMLmovi_Subject_3_F_MoSh_Subject_3_F_17_poses', # sit down cross legged to get up 
+'0-BMLmovi_Subject_76_F_MoSh_Subject_76_F_20_poses'] # sit down cross legged to get up 
+# all bad 
+
+fourth_sitdown_failed1 = ['0-BMLmovi_Subject_47_F_MoSh_Subject_47_F_21_poses'] # "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed1_actual/Humanoid.pth"
+
+fourth_sitdown_failed2 = ['0-BMLmovi_Subject_3_F_MoSh_Subject_3_F_17_poses'] # /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed2/Humanoid.pthb
+fourth_sitdown_failed3 = ['0-BMLmovi_Subject_76_F_MoSh_Subject_76_F_20_poses'] # "/move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed3/Humanoid.pth"
+
+# WAITING TO RUN 
+
 
 class FixHeightMode(Enum):
     no_fix = 0
@@ -354,10 +483,10 @@ class MotionLibBase():
         return
         
     def load_data(self, motion_file,  min_length=-1, im_eval = False):
-        if osp.isfile(motion_file):
+        if osp.isfile(motion_file): 
             self.mode = MotionlibMode.file
             self._motion_data_load = joblib.load(motion_file)
-        else:
+        else:           
             self.mode = MotionlibMode.directory
             self._motion_data_load = glob.glob(osp.join(motion_file, "*.pkl"))
         
@@ -451,12 +580,12 @@ class MotionLibBase():
         # TAKARA    
         # random_sample = True
         # start_idx = 20
-        if random_sample:
-            sample_idxes = torch.multinomial(self._sampling_prob, num_samples=num_motion_to_load, replacement=True).to(self._device)
-        else:           
-            sample_idxes = torch.remainder(torch.arange(len(skeleton_trees)) + start_idx, self._num_unique_motions ).to(self._device)
+        # if random_sample:
+        #     sample_idxes = torch.multinomial(self._sampling_prob, num_samples=num_motion_to_load, replacement=True).to(self._device)
+        # else:           
+        #     sample_idxes = torch.remainder(torch.arange(len(skeleton_trees)) + start_idx, self._num_unique_motions ).to(self._device)
 
-        sample_idxes = torch.multinomial(self._sampling_prob, num_samples=num_motion_to_load, replacement=False).to(self._device)
+        # sample_idxes = torch.multinomial(self._sampling_prob, num_samples=num_motion_to_load, replacement=False).to(self._device)
 
         # sample_idxes = torch.remainder(torch.arange(len(skeleton_trees)) + 0, 1).to(self._device) # create sample idx for one motion
         # import ipdb; ipdb.set_trace()
@@ -469,17 +598,35 @@ class MotionLibBase():
 
         # SAMPLE BASED ON NAME
         # import ipdb; ipdb.set_trace()
-        # names = ['0-KIT_8_WalkingStraightForwards03_poses' , '0-KIT_4_WalkingStraightBackwards04_poses','0-KIT_9_WalkInClockwiseCircle05_poses', '0-KIT_10_WalkInCounterClockwiseCircle06_poses']
+        names = ['0-KIT_8_WalkingStraightForwards03_poses' , '0-KIT_4_WalkingStraightBackwards04_poses','0-KIT_9_WalkInClockwiseCircle05_poses', '0-KIT_10_WalkInCounterClockwiseCircle06_poses']
         # names = ['0-KIT_167_upstairs08_poses']#, '0-KIT_425_walking_01_poses', '0-KIT_183_walking_medium03_poses', '0-KIT_317_bend_right03_poses', '0-KIT_7_WalkInCounterClockwiseCircle05_poses', '0-KIT_205_walking_slow03_poses', '0-KIT_359_bend_right08_poses', '0-KIT_3_bend_left03_poses', '0-KIT_348_walking_fast02_poses', '0-KIT_424_walking_slow04_poses', '0-KIT_11_WalkInClockwiseCircle06_poses', '0-KIT_3_turn_left08_poses', '0-KIT_9_walking_slow02_poses', '0-KIT_425_bend_left05_poses', '0-KIT_3_walk_with_support03_poses', '0-KIT_12_WalkInCounterClockwiseCircle08_poses', '0-KIT_11_WalkingStraightForwards04_poses', '0-KIT_7_WalkingStraightForwards06_poses', '0-KIT_317_walking_slow03_poses', '0-KIT_3_bend_left01_poses', '0-KIT_3_walking_forward_4steps_right_05_poses', '0-KIT_12_WalkingStraightBackwards08_poses', '0-KIT_205_turn_left03_poses', '0-KIT_317_walking_fast04_poses', '0-KIT_6_LeftTurn02_1_poses', '0-KIT_167_walking_run05_poses', '0-KIT_8_WalkInClockwiseCircle06_poses', '0-KIT_11_WalkingStraightForwards07_poses', '0-KIT_317_bend_right06_poses', '0-KIT_4_WalkInClockwiseCircle03_poses', '0-KIT_3_turn_right10_poses', '0-KIT_3_bend_left06_poses', '0-KIT_6_WalkInCounterClockwiseCircle09_1_poses', '0-KIT_424_walking_slow07_poses', '0-KIT_317_bend_right01_poses', '0-KIT_7_WalkingStraightForwards04_poses', '0-KIT_9_LeftTurn10_poses', '0-KIT_7_WalkingStraightForwards09_poses', '0-KIT_183_walking_fast10_poses', '0-KIT_317_bend_left08_poses', '0-KIT_359_turn_left05_poses', '0-KIT_183_bend_left09_poses', '0-KIT_314_turn_left05_poses', '0-KIT_183_bend_right03_poses', '0-KIT_167_turn_right09_poses', '0-KIT_425_walking_05_poses', '0-KIT_167_turn_left08_poses', '0-KIT_167_turn_left02_poses', '0-KIT_425_walking_07_poses', '0-KIT_317_walking_fast07_poses', '0-KIT_7_WalkInClockwiseCircle10_poses', '0-KIT_317_walking_run07_poses', '0-KIT_9_WalkInCounterClockwiseCircle05_poses', '0-KIT_314_turn_left10_poses', '0-KIT_8_WalkInCounterClockwiseCircle03_poses', '0-KIT_359_walking_fast04_poses', '0-KIT_314_bend_left09_poses', '0-KIT_11_WalkingStraightBackwards07_1_poses', '0-KIT_167_bend_left01_poses', '0-KIT_9_walking_slow09_poses', '0-KIT_3_turn_left01_poses', '0-KIT_8_WalkingStraightForwards06_poses', '0-KIT_3_bend_left07_poses', '0-KIT_425_walking_medium08_poses', '0-KIT_183_walking_fast01_poses', '0-KIT_425_walking_slow02_poses', '0-KIT_424_turn_right09_poses', '0-KIT_8_RightTurn04_poses', '0-KIT_9_walking_slow08_poses', '0-KIT_11_WalkingStraightForwards01_poses', '0-KIT_317_walking_medium03_poses', '0-KIT_10_WalkInClockwiseCircle08_poses', '0-KIT_317_walking_fast02_poses', '0-KIT_8_WalkInClockwiseCircle02_poses', '0-KIT_9_LeftTurn01_poses', '0-KIT_11_WalkInCounterClockwiseCircle05_poses', '0-KIT_183_bend_left04_poses', '0-KIT_314_walking_run03_poses', '0-KIT_348_bend_right08_poses', '0-KIT_11_WalkInClockwiseCircle02_poses', '0-KIT_12_RightTurn07_poses', '0-KIT_317_bend_right05_poses', '0-KIT_3_walking_run06_poses', '0-KIT_424_bend_right05_poses', '0-KIT_8_WalkingStraightBackwards05_poses', '0-KIT_425_walking_slow11_poses', '0-KIT_317_turn_left10_poses', '0-KIT_348_bend_left01_poses', '0-KIT_314_walking_slow05_poses', '0-KIT_4_WalkingStraightBackwards03_poses', '0-KIT_424_bend_left08_poses', '0-KIT_3_walking_run05_poses', '0-KIT_8_WalkInClockwiseCircle09_poses', '0-KIT_6_RightTurn10_1_poses', '0-KIT_11_RightTurn06_poses', '0-KIT_314_turn_right11_poses', '0-KIT_9_bend_left04_poses', '0-KIT_348_walking_fast01_poses', '0-KIT_6_WalkInCounterClockwiseCircle01_1_poses', '0-KIT_424_bend_right08_poses']
         # names = ['0-KIT_1347_Experiment3_subject1347_wash_leg_position_smallcircles_02_poses']
         # names = ['0-KIT_200_Handstand04_poses']#, '0-KIT_200_Handstand06_poses', '0-KIT_200_Handstand02_poses', '0-KIT_200_Handstand01_poses', '0-KIT_200_Handstand05_poses']
         
         #################################################################################################
         name2idx = {name: idx for idx, name in enumerate(self._motion_data_keys)}
-        names = FAILED_MOT # 
+        # names = [handstands[5]] #[break_dance[0]] #
+        # names = ground2getup_failed3_subset1 #cartwheels_failed3_subset2  #handstands_failed3_subset2  #+ sprints + kicks_punches + floor_poses + weird_walks + break_dance + front_flips
+        # names = cartwheels_failed3_subset3  #cartwheels_failed3_subset2  #handstands_failed3_subset2  #+ sprints + kicks_punches + floor_poses + weird_walks + break_dance + front_flips
+        # names = handstands_failed3_subset1 #cartwheels_failed3_subset2  #handstands_failed3_subset2  #+ sprints + kicks_punches + floor_poses + weird_walks + break_dance + front_flips
+        # names=ballet
+        # names=throw_failed1_subset3
+        # names = second_kicks_punches
+        # names = break_dance # + front_flips
+        # clip_motion = False
+        # names = limp_failed1_subset1
+        # names= handstands_failed3_subset1
+        # names= third_kicks_punches
+        # names = fourth_basketball
+        # names = cartwheels_failed3_subset3
+        # names = [names[1]]
+        # names = [back_flips[6]]
+        # names = limp_failed1_subset1
+        # names = second_kicks_punches
+        names = handstands_failed2_subset2
+        
         #names = FAILED_MOT_1 # 
         # print(len(final_failed))
-        # names = final_failed[21:] #FAILED_MOT_1 + FAILED_MOT_2 + FAILED_MOT_3 + FAILED_MOT_4 #FAILED_MOT_5 + FAILED_MOT_6 + FAILED_MOT_7 + FAILED_MOT_8
         # names = [CARTWHEEL[0]]        
         # names = [FLIPS[0]]            
         # names = ['0-KIT_200_Handstand04_poses']
@@ -488,7 +635,7 @@ class MotionLibBase():
         # len(names)      
         sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
         # sample_idxes = torch.sort(sample_idxes).values.repeat_interleave(80)
-        sample_idxes = torch.sort(sample_idxes).values.repeat(80)
+        sample_idxes = torch.sort(sample_idxes).values.repeat(550)
 
         # np.random.shuffle(sample_idxes)     
         sample_idxes= sample_idxes[:len(skeleton_trees)]
@@ -519,8 +666,8 @@ class MotionLibBase():
         #         idx = np.where(self._motion_data_keys == '0-'+name)[0][0]
         #         eval_idxs.append(idx)
             
-            # eval_idxs = np.flip(np.array(sorted(eval_idxs)), axis=0)
-            # print(f'Number of eval keys: {len(eval_idxs)}')
+        #     eval_idxs = np.flip(np.array(sorted(eval_idxs)), axis=0)
+        #     print(f'Number of eval keys: {len(eval_idxs)}')
             
 
         # def get_upsample_dist(m2a_map, action_counts, subset):
@@ -535,20 +682,20 @@ class MotionLibBase():
 
 
 
-        # # ============
-        # # NOTE: For upsampled motions
-        # UPSAMPLE = False
-        # # if self.mode_ == 'collect' and UPSAMPLE:
-        # #     short_subset_mask = [self.motion_to_len[name] <= 800 for name in self._motion_data_keys]
-        # #     subset = self._motion_data_keys[short_subset_mask]
-        # #     m2a_map = np.load('motion_to_action_map_KIT.npz', allow_pickle=True)['motion_to_action_map'][()]
-        # #     action_counts = np.load('action_counts_KIT.npz', allow_pickle=True)['action_counts'][()]
-        # #     weights = get_upsample_dist(m2a_map, action_counts, subset)
-        # #     print(f'Number of short motions: {len(subset)}')
-        # # ============
+        # ============
+        # NOTE: For upsampled motions
+        UPSAMPLE = False
+        # if self.mode_ == 'collect' and UPSAMPLE:
+        #     short_subset_mask = [self.motion_to_len[name] <= 800 for name in self._motion_data_keys]
+        #     subset = self._motion_data_keys[short_subset_mask]
+        #     m2a_map = np.load('motion_to_action_map_KIT.npz', allow_pickle=True)['motion_to_action_map'][()]
+        #     action_counts = np.load('action_counts_KIT.npz', allow_pickle=True)['action_counts'][()]
+        #     weights = get_upsample_dist(m2a_map, action_counts, subset)
+        #     print(f'Number of short motions: {len(subset)}')
+        # ============
 
 
-        # # ============
+        # ============
         # # NOTE: For retrying failed motions 
         # COLLECT_FAILED = False
         # failed_motion_file = 'collected_data/obs-phc_sigma=0.06/failed.txt'
@@ -567,7 +714,11 @@ class MotionLibBase():
         # print(f'Number of motion keys: {len(self._motion_data_keys)}')
 
         # # ===== Choose sample_idxes based on mode =====
-        # start_idx = self.collect_start_idx
+        start_idx = self.collect_start_idx
+        end_idx = min(start_idx + self.collect_step_idx, self._num_unique_motions )
+        sample_idxes = np.arange(start_idx, end_idx)
+        # sample_idxes = failed_idxs[sample_idxes]
+        
         # if self.mode_ == 'eval':
         #     end_idx = min(start_idx + self.collect_step_idx, len(eval_idxs))
         #     sample_idxes = np.arange(start_idx, end_idx)
@@ -577,6 +728,9 @@ class MotionLibBase():
         #     sample_idxes = np.arange(start_idx, end_idx)
         #     sample_idxes = failed_idxs[sample_idxes]
         # else:
+        #     pass
+        #     assert False
+        
         #     if UPSAMPLE:
         #         base_idxs = np.arange(len(self._motion_data_keys))
         #         base_idxs = base_idxs[short_subset_mask]
@@ -592,18 +746,17 @@ class MotionLibBase():
         #         sample_idxes = np.arange(start_idx, end_idx)
         # =====
 
+        # sample_idxes = shuffled_idxs[sample_idxes] # permuation of motion data keys
+        sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
 
-        # # sample_idxes = shuffled_idxs[sample_idxes] # permuation of motion data keys
-        # sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
+        # len(skeleton_trees) is the number of environments. Need to cut it here.
+        sample_idxes = sample_idxes[:len(skeleton_trees)]
 
-        # # len(skeleton_trees) is the number of environments. Need to cut it here.
-        # sample_idxes = sample_idxes[:len(skeleton_trees)]
-
-        #np.random.shuffle(sample_idxes)
-        #sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
+        # np.random.shuffle(sample_idxes)
+        # sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
         # sample_idxes = torch.tensor(sample_idxes, device=self._device)
         # sample_idxes = torch.sort(sample_idxes).values
-        #sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
+        # sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
 
         #######################################################################################3
 
@@ -661,9 +814,54 @@ class MotionLibBase():
             if USE_CACHE:
                 curr_motion = DeviceCache(curr_motion, self._device)
 
+            # # TAkara
+            # if clip_motion: 
+            #     start= 1200 
+            #     orig_len = motion_file_data['pose_quat_global'].shape[0]
+
+            #     motion_file_data['pose_quat_global'] = motion_file_data['pose_quat_global'][start:]
+
+            #     motion_file_data['pose_quat'] = motion_file_data['pose_quat'][start:]
+            #     motion_file_data['trans_orig'] = motion_file_data['trans_orig'][start:]
+            #     motion_file_data['root_trans_offset'] = motion_file_data['root_trans_offset'][start:]
+            #     motion_file_data['pose_aa'] = motion_file_data['pose_aa'][start:]
+
+                # curr_motion.global_rotation= curr_motion.global_rotation[start:]
+
+                # for attr_name in dir(curr_motion):
+                #     # Skip special and private attributes
+                #     if attr_name.startswith('__'):
+                #         continue
+                    
+                #     try:
+                #         attr_value = getattr(curr_motion, attr_name, None)
+
+                #         # Check if the attribute is a PyTorch tensor and its shape
+                #         if isinstance(attr_value, torch.Tensor) and attr_value.shape[0] == orig_len:
+                #             # import ipdb; ipdb.set_trace()
+
+                #             # Assuming you want to clip the tensor from index 'start' to the end
+                #             # Ensure 'start' is within the tensor's range to avoid 'index out of range' errors
+                #             if start < attr_value.shape[0]:
+                #                 # Clip the tensor
+                #                 clipped_tensor = attr_value[start:]
+                #                 # Optionally update the attribute with the clipped tensor if needed
+                #                 setattr(curr_motion, attr_name, clipped_tensor)
+                #             else:
+                #                 print(f"Skipping {attr_name} because start index {start} is out of range.")
+
+                #     except AttributeError as e:
+                #         # Handle the case where the attribute can't be set
+                #         print(f"Cannot set attribute '{attr_name}': {e}")
+    
+                # import ipdb; ipdb.set_trace()
+                # import ipdb; ipdb.set_trace()
+
             motion_fps = curr_motion.fps
             curr_dt = 1.0 / motion_fps
-
+            # if clip_motion:
+            #     num_frames = motion_file_data['pose_quat_global'].shape[0]
+            # else:
             num_frames = curr_motion.tensor.shape[0]
             curr_len = 1.0 / motion_fps * (num_frames - 1)
             

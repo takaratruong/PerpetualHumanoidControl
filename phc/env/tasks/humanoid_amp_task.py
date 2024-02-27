@@ -42,7 +42,7 @@ class HumanoidAMPTask(humanoid_amp.HumanoidAMP):
                          headless=headless)
         self.has_task = True
         return
-
+        
 
     def get_obs_size(self):
         obs_size = super().get_obs_size()
