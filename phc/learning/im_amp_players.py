@@ -522,11 +522,11 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         self.env.task.use_noisy_action = True
                         # import ipdb; ipdb.set_trace() # Takara
 
-                        if observation.shape[0] != self.env.num_envs:
-                            assert False, 'A Bug has been reached, Observation shape does not match the number of envs'
-                            import ipdb; ipdb.set_trace() # Takara
+                        # if observation.shape[0] != self.env.num_envs:
+                        #     assert False, 'A Bug has been reached, Observation shape does not match the number of envs'
+                        #     import ipdb; ipdb.set_trace() # Takara
 
-                        obs_store[~done_envs, n,:] = observation[~done_envs,:]
+                        # obs_store[~done_envs, n,:] = observation[~done_envs,:]
             
             
                     if self.mode == 'diff' or self.mode == 'eval':
@@ -559,12 +559,11 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     # CHANGE BACK
                     #####################################################################################################################
 
-                    assert self.env.task.mean_action.shape[0] == self.env.num_envs, 'a bug has been reached'
-
-
-                    if self.mode in ['collect', 'pert']:      
-                        if self.env.task.mean_action.shape[0] == self.env.num_envs:
-                            act_store[~done_envs, n,:] = self.env.task.mean_action[~done_envs,:]
+                    # assert self.env.task.mean_action.shape[0] == self.env.num_envs, 'a bug has been reached'
+                    # if self.mode in ['collect', 'pert']:      
+                    #     if self.env.task.mean_action.shape[0] == self.env.num_envs:
+                    #         act_store[~done_envs, n,:] = self.env.task.mean_action[~done_envs,:]
+                    
                     # else: 
 
                     # if flags.rand_start:

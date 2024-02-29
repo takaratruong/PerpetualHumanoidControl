@@ -898,8 +898,6 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
                 #     ref_body_ang_vel_subset = ref_body_ang_vel[..., self._track_bodies_id, :]
 
 
-
-
             elif self.obs_v == 5:
                 obs = compute_imitation_observations_v6(root_pos, root_rot, body_pos_subset, body_rot_subset, body_vel_subset, body_ang_vel_subset, ref_rb_pos_subset, ref_rb_rot_subset, ref_body_vel_subset, ref_body_ang_vel_subset, time_steps, self._has_upright_start)
                 one_hots = self._motion_lib.one_hot_motions[env_ids]

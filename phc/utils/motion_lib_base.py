@@ -609,7 +609,7 @@ class MotionLibBase():
         # names = ground2getup_failed3_subset1 #cartwheels_failed3_subset2  #handstands_failed3_subset2  #+ sprints + kicks_punches + floor_poses + weird_walks + break_dance + front_flips
         # names = cartwheels_failed3_subset3  #cartwheels_failed3_subset2  #handstands_failed3_subset2  #+ sprints + kicks_punches + floor_poses + weird_walks + break_dance + front_flips
         # names = handstands_failed3_subset1 #cartwheels_failed3_subset2  #handstands_failed3_subset2  #+ sprints + kicks_punches + floor_poses + weird_walks + break_dance + front_flips
-        # names=ballet
+        # names=ballet   
         # names=throw_failed1_subset3
         # names = second_kicks_punches
         # names = break_dance # + front_flips
@@ -624,7 +624,7 @@ class MotionLibBase():
         # names = limp_failed1_subset1
         # names = second_kicks_punches
         names = handstands_failed2_subset2
-        
+        # names = throw_failed1_subset1
         #names = FAILED_MOT_1 # 
         # print(len(final_failed))
         # names = [CARTWHEEL[0]]        
@@ -714,9 +714,9 @@ class MotionLibBase():
         # print(f'Number of motion keys: {len(self._motion_data_keys)}')
 
         # # ===== Choose sample_idxes based on mode =====
-        start_idx = self.collect_start_idx
-        end_idx = min(start_idx + self.collect_step_idx, self._num_unique_motions )
-        sample_idxes = np.arange(start_idx, end_idx)
+        # start_idx = self.collect_start_idx
+        # end_idx = min(start_idx + self.collect_step_idx, self._num_unique_motions )
+        # sample_idxes = np.arange(start_idx, end_idx)
         # sample_idxes = failed_idxs[sample_idxes]
         
         # if self.mode_ == 'eval':
@@ -747,16 +747,26 @@ class MotionLibBase():
         # =====
 
         # sample_idxes = shuffled_idxs[sample_idxes] # permuation of motion data keys
-        sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
+        # sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
 
         # len(skeleton_trees) is the number of environments. Need to cut it here.
-        sample_idxes = sample_idxes[:len(skeleton_trees)]
+        # sample_idxes = sample_idxes[:len(skeleton_trees)]
 
         # np.random.shuffle(sample_idxes)
         # sample_idxes = torch.tensor(sample_idxes[:min(num_motions, len(skeleton_trees))], device=self._device)
         # sample_idxes = torch.tensor(sample_idxes, device=self._device)
         # sample_idxes = torch.sort(sample_idxes).values
         # sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
+
+
+
+        # start_idx = self.collect_start_idx
+        # end_idx = min(start_idx + self.collect_step_idx, self._num_unique_motions )
+        # sample_idxes = np.arange(start_idx, end_idx)
+        # sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
+        # sample_idxes = sample_idxes[:len(skeleton_trees)]
+
+
 
         #######################################################################################3
 
