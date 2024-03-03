@@ -171,7 +171,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         return
     
     def _shift_character(self):
-        print("#################### Generating Fall State ####################")
+        print("#################### Generating Shift State ####################")
         # max_steps = 150
         # max_steps = 50000
 
@@ -185,15 +185,35 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         max_magnitude = 0.3
         noise = torch.rand(root_states[..., 0:2].size()).to('cuda')
 
+
+
         noise = min_magnitude + (max_magnitude - min_magnitude) * noise 
         signs = torch.sign(torch.rand(root_states[..., 0:2].size()) - 0.5).to('cuda')
         noise = noise * signs
-        root_states[..., 0:2] += noise
+        root_states[..., 0:2] += 0# noise
 
-        root_states[..., 3:6] += torch.randn_like(root_states[..., 3:6])*.05  ## Random root rotation
+        # import ipdb; ipdb.set_trace()
+
+        # root_states[..., 3:6] += torch.randn_like(root_states[..., 3:6])*.05  ## Random root rotation
         
         # root_states[..., 3:7] = torch.randn_like(root_states[..., 3:7])  ## Random root rotation
         # root_states[..., 3:7] = torch.nn.functional.normalize(root_states[..., 3:7], dim=-1)
+        
+        # generate a yaw offset for the root rotation using scipy.spatial.transform.Rotation 
+        quat = root_states[..., 3:7]
+        # import ipdb; ipdb.set_trace()
+        yaw_offset = np.pi / 4  # Set your desired yaw offset here
+
+        rot = sRot.from_quat(quat)
+        euler = rot.as_euler('xyz')
+        euler[2] += yaw_offset  
+        rot = sRot.from_euler('xyz', euler) 
+        quat = rot.as_quat()    
+        # import ipdb; ipdb.set_trace()
+        
+        root_states[..., 3:7] = torch.tensor(quat).clone().to('cuda')
+
+
         self._humanoid_root_states[env_ids] = root_states
 
         env_ids_int32 = self._humanoid_actor_ids[env_ids]
@@ -201,7 +221,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         
         # Add Gaussian noise to dof_state
         mean = self._dof_state
-        std = 0.12  # Set your desired standard deviation here
+        std = 0.0  # Set your desired standard deviation here
         noise = torch.randn_like(mean) * std
         dof_state_with_noise = mean + noise
 

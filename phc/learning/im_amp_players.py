@@ -86,8 +86,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             self.m2t_map = np.load(self.m2t_map_path, allow_pickle=True)['motion_to_text_map'][()]
             self.data_split = 'train' # re.search(r'(train|val|test){1}\.npz', self.m2t_map_path).group()[:-len('.npz')]
 
-
-
         self.collect_start_idx = config['collect_start_idx'] # Starting index for collecting data
         self.collect_step_idx = config['collect_step_idx'] # how much the collect index increases by each time
         self.act_noise = config['act_noise'] # Action noise level
@@ -150,8 +148,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 curr_max = humanoid_env._motion_lib.get_motion_num_steps().max()
             else:
                 curr_max = max_steps
-
-
 
         # if flags.im_eval:
 
@@ -235,7 +231,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     print(f'Failed texts: {self.failed_texts}')
                     if self.mode == 'diff':
                         exit() 
-                    
+
                     # terminate_hist = np.concatenate(self.terminate_memory)
                     # succ_idxes = np.nonzero(~terminate_hist[: num_evals])[0].tolist()
 
@@ -293,7 +289,6 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
             update_str = f"Terminated: {self.terminate_state.sum().item()} | max frames: {curr_max} | steps {self.curr_stpes} | Start: {humanoid_env.start_idx} | Succ rate: {self.success_rate:.3f} | Mpjpe: {np.mean(self.mpjpe_all) * 1000:.3f}"
             self.pbar.set_description(update_str)
         
-
 
 
         if self.mode == 'diff': 
@@ -436,7 +431,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                 elif self.obs_type == 'phc':
                     obs_deque = collections.deque([self.env.task.phc_obs] *hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 elif self.obs_type =='ref':
-                    obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs*0))] * hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
+                    obs_deque = collections.deque([np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))] * hydra_cfg.policy.n_obs_steps, maxlen=hydra_cfg.policy.n_obs_steps)
                 else:
                     raise Exception('Invalid obs_type')
             
@@ -499,7 +494,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     elif self.obs_type == 'phc':
                         observation = self.env.task.phc_obs
                     elif self.obs_type =='ref':
-                        observation = np.hstack((self.env.task.diff_obs, self.env.task.ref_obs*0))
+                        observation = np.hstack((self.env.task.diff_obs, self.env.task.ref_obs))
                     else:
                         raise Exception('Invalid obs_type')
                     
@@ -552,7 +547,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     
                     # Step the environment 
                     obs_dict, r, done, info = self.env_step(self.env, action)
-
+                    # import ipdb; ipdb.set_trace() # Takara
                     # Collect Action here. The env_step goes from the heirarchical action to the actual torque, which we capture.  
                     # if self.mode != 'expert':
                     
@@ -612,6 +607,10 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                     # self.terminate_state_eval[~done_envs] = torch.logical_or(termination_state[~done_envs], self.terminate_state_eval[~done_envs])
                     self.terminate_state_eval[~done_envs] = torch.logical_or(termination_state[~done_envs], self.terminate_state_eval[~done_envs])
 
+                    failed_names = self.motion_lib.curr_motion_keys[self.terminate_state_eval.nonzero(as_tuple=False).squeeze()]        
+
+                    print(f'Failed motions: {failed_names}')
+                    
                     # print(termination_state)
                     print(self.terminate_state_eval.sum())
                     
@@ -714,7 +713,7 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                             # else:
                             #     term = []
                             # import ipdb; ipdb.set_trace()
-
+                            
                             np.savez(
                                 data_path,
                                 obs=obs_store, act=act_store,

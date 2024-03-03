@@ -593,8 +593,8 @@ class MotionLibBase():
         ### SAMPLE RANDOM KEYS
         # start_idx = 1 #1300 #1300 #5000
         # assert start_idx <= self._num_unique_motions, 'start_idx must be less than the number of unique motions'
-        # num_duplicates = 5
-        # sample_idxes = create_duplicated_list(n=len(skeleton_trees) , num_duplicates=num_duplicates, limit=int(self._num_unique_motions), start_idx=start_idx, device=self._device)
+        num_duplicates = 5
+        sample_idxes = create_duplicated_list(n=len(skeleton_trees) , num_duplicates=num_duplicates, limit=int(self._num_unique_motions), start_idx=start_idx, device=self._device)
 
         # SAMPLE BASED ON NAME
         # import ipdb; ipdb.set_trace()
@@ -623,7 +623,7 @@ class MotionLibBase():
         # names = [back_flips[6]]
         # names = limp_failed1_subset1
         # names = second_kicks_punches
-        names = handstands_failed2_subset2
+        # names = handstands_failed2_subset2
         # names = throw_failed1_subset1
         #names = FAILED_MOT_1 # 
         # print(len(final_failed))
@@ -633,10 +633,20 @@ class MotionLibBase():
         # names = FAILED_MOT_1
         # names = FLIPS
         # len(names)      
-        sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
-        # sample_idxes = torch.sort(sample_idxes).values.repeat_interleave(80)
-        sample_idxes = torch.sort(sample_idxes).values.repeat(550)
 
+        names = ['0-SSM_synced_20160930_50032_punch_kick_sync_poses']
+        names =['0-Transitions_mocap_mazen_c3d_walksideways_running_poses']
+        names = [   '0-Transitions_mocap_mazen_c3d_devishdance_kick_poses',
+                    '0-Transitions_mocap_mazen_c3d_sit_jumpinplace_poses',
+                    '0-Transitions_mocap_mazen_c3d_walksideways_running_poses',
+                    '0-Transitions_mocap_mazen_c3d_walksideways_runbackwards_poses',
+                    '0-SSM_synced_20161014_50033_dribble_kick_sync_poses',
+                    '0-SSM_synced_20161014_50033_punch_kick_sync_poses',
+                    '0-SSM_synced_20160930_50032_punch_kick_sync_poses',  
+                    ] 
+        
+        sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
+        sample_idxes = torch.sort(sample_idxes).values.repeat(550)
         # np.random.shuffle(sample_idxes)     
         sample_idxes= sample_idxes[:len(skeleton_trees)]
 
