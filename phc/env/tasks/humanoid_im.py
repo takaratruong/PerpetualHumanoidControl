@@ -203,7 +203,7 @@ class HumanoidIm(humanoid_amp_task.HumanoidAMPTask):
         quat = root_states[..., 3:7]
         # import ipdb; ipdb.set_trace()
         yaw_offset = np.pi / 4  # Set your desired yaw offset here
-
+        
         rot = sRot.from_quat(quat)
         euler = rot.as_euler('xyz')
         euler[2] += yaw_offset  

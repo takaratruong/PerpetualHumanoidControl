@@ -644,7 +644,7 @@ class MotionLibBase():
                     '0-SSM_synced_20161014_50033_punch_kick_sync_poses',
                     '0-SSM_synced_20160930_50032_punch_kick_sync_poses',  
                     ] 
-        
+
         sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
         sample_idxes = torch.sort(sample_idxes).values.repeat(550)
         # np.random.shuffle(sample_idxes)     
