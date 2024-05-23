@@ -91,7 +91,7 @@ class HumanoidAMPTask(humanoid_amp.HumanoidAMP):
         else:
             obs = humanoid_obs
         
-                
+
         if self.obs_v == 2:
             # Double sub will return a copy.
             B, N = obs.shape

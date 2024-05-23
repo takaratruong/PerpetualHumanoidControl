@@ -149,3 +149,6 @@ phc/data/
 *.npz
 *.zip 
 *.out
+train_mask_1.0.npy
+*.npy 
+

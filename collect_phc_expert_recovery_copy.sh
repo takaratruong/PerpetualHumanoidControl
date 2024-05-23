@@ -24,8 +24,8 @@ echo "conda environment = "$CONDA_DEFAULT_ENV
 
 max_idxs=3628 # Number of motions in the motion lib # 11626
 collect_start_idx=0
-collect_step_idx=100
-obs_type="phc"
+collect_step_idx=1000
+obs_type="ref" #"phc"
 act_noise=0.02
 seed=42
 
@@ -52,7 +52,6 @@ run_collection () {
         ((tries++))
     done
 }
-
 
 ### FOR ALL MOTIONS ###
 

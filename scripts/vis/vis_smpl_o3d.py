@@ -97,6 +97,8 @@ mujoco_2_smpl = [mujoco_joint_names.index(q) for q in joint_names if q in mujoco
 
 
 def main():
+    import ipdb; ipdb.set_trace()
+
     global reset, paused, recording, image_list, control
     o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
     vis = o3d.visualization.VisualizerWithKeyCallback()

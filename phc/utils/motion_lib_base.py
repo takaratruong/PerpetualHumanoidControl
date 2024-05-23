@@ -593,8 +593,9 @@ class MotionLibBase():
         ### SAMPLE RANDOM KEYS
         # start_idx = 1 #1300 #1300 #5000
         # assert start_idx <= self._num_unique_motions, 'start_idx must be less than the number of unique motions'
-        num_duplicates = 5
+        num_duplicates = 1
         sample_idxes = create_duplicated_list(n=len(skeleton_trees) , num_duplicates=num_duplicates, limit=int(self._num_unique_motions), start_idx=start_idx, device=self._device)
+
 
         # SAMPLE BASED ON NAME
         # import ipdb; ipdb.set_trace()
@@ -602,7 +603,9 @@ class MotionLibBase():
         # names = ['0-KIT_167_upstairs08_poses']#, '0-KIT_425_walking_01_poses', '0-KIT_183_walking_medium03_poses', '0-KIT_317_bend_right03_poses', '0-KIT_7_WalkInCounterClockwiseCircle05_poses', '0-KIT_205_walking_slow03_poses', '0-KIT_359_bend_right08_poses', '0-KIT_3_bend_left03_poses', '0-KIT_348_walking_fast02_poses', '0-KIT_424_walking_slow04_poses', '0-KIT_11_WalkInClockwiseCircle06_poses', '0-KIT_3_turn_left08_poses', '0-KIT_9_walking_slow02_poses', '0-KIT_425_bend_left05_poses', '0-KIT_3_walk_with_support03_poses', '0-KIT_12_WalkInCounterClockwiseCircle08_poses', '0-KIT_11_WalkingStraightForwards04_poses', '0-KIT_7_WalkingStraightForwards06_poses', '0-KIT_317_walking_slow03_poses', '0-KIT_3_bend_left01_poses', '0-KIT_3_walking_forward_4steps_right_05_poses', '0-KIT_12_WalkingStraightBackwards08_poses', '0-KIT_205_turn_left03_poses', '0-KIT_317_walking_fast04_poses', '0-KIT_6_LeftTurn02_1_poses', '0-KIT_167_walking_run05_poses', '0-KIT_8_WalkInClockwiseCircle06_poses', '0-KIT_11_WalkingStraightForwards07_poses', '0-KIT_317_bend_right06_poses', '0-KIT_4_WalkInClockwiseCircle03_poses', '0-KIT_3_turn_right10_poses', '0-KIT_3_bend_left06_poses', '0-KIT_6_WalkInCounterClockwiseCircle09_1_poses', '0-KIT_424_walking_slow07_poses', '0-KIT_317_bend_right01_poses', '0-KIT_7_WalkingStraightForwards04_poses', '0-KIT_9_LeftTurn10_poses', '0-KIT_7_WalkingStraightForwards09_poses', '0-KIT_183_walking_fast10_poses', '0-KIT_317_bend_left08_poses', '0-KIT_359_turn_left05_poses', '0-KIT_183_bend_left09_poses', '0-KIT_314_turn_left05_poses', '0-KIT_183_bend_right03_poses', '0-KIT_167_turn_right09_poses', '0-KIT_425_walking_05_poses', '0-KIT_167_turn_left08_poses', '0-KIT_167_turn_left02_poses', '0-KIT_425_walking_07_poses', '0-KIT_317_walking_fast07_poses', '0-KIT_7_WalkInClockwiseCircle10_poses', '0-KIT_317_walking_run07_poses', '0-KIT_9_WalkInCounterClockwiseCircle05_poses', '0-KIT_314_turn_left10_poses', '0-KIT_8_WalkInCounterClockwiseCircle03_poses', '0-KIT_359_walking_fast04_poses', '0-KIT_314_bend_left09_poses', '0-KIT_11_WalkingStraightBackwards07_1_poses', '0-KIT_167_bend_left01_poses', '0-KIT_9_walking_slow09_poses', '0-KIT_3_turn_left01_poses', '0-KIT_8_WalkingStraightForwards06_poses', '0-KIT_3_bend_left07_poses', '0-KIT_425_walking_medium08_poses', '0-KIT_183_walking_fast01_poses', '0-KIT_425_walking_slow02_poses', '0-KIT_424_turn_right09_poses', '0-KIT_8_RightTurn04_poses', '0-KIT_9_walking_slow08_poses', '0-KIT_11_WalkingStraightForwards01_poses', '0-KIT_317_walking_medium03_poses', '0-KIT_10_WalkInClockwiseCircle08_poses', '0-KIT_317_walking_fast02_poses', '0-KIT_8_WalkInClockwiseCircle02_poses', '0-KIT_9_LeftTurn01_poses', '0-KIT_11_WalkInCounterClockwiseCircle05_poses', '0-KIT_183_bend_left04_poses', '0-KIT_314_walking_run03_poses', '0-KIT_348_bend_right08_poses', '0-KIT_11_WalkInClockwiseCircle02_poses', '0-KIT_12_RightTurn07_poses', '0-KIT_317_bend_right05_poses', '0-KIT_3_walking_run06_poses', '0-KIT_424_bend_right05_poses', '0-KIT_8_WalkingStraightBackwards05_poses', '0-KIT_425_walking_slow11_poses', '0-KIT_317_turn_left10_poses', '0-KIT_348_bend_left01_poses', '0-KIT_314_walking_slow05_poses', '0-KIT_4_WalkingStraightBackwards03_poses', '0-KIT_424_bend_left08_poses', '0-KIT_3_walking_run05_poses', '0-KIT_8_WalkInClockwiseCircle09_poses', '0-KIT_6_RightTurn10_1_poses', '0-KIT_11_RightTurn06_poses', '0-KIT_314_turn_right11_poses', '0-KIT_9_bend_left04_poses', '0-KIT_348_walking_fast01_poses', '0-KIT_6_WalkInCounterClockwiseCircle01_1_poses', '0-KIT_424_bend_right08_poses']
         # names = ['0-KIT_1347_Experiment3_subject1347_wash_leg_position_smallcircles_02_poses']
         # names = ['0-KIT_200_Handstand04_poses']#, '0-KIT_200_Handstand06_poses', '0-KIT_200_Handstand02_poses', '0-KIT_200_Handstand01_poses', '0-KIT_200_Handstand05_poses']
-        
+        # names = ['0-ACCAD_Male2Walking_c3d_B18 -  Walk to leap to walk t2_poses']
+        # names = ['0-BioMotionLab_NTroje_rub011_0030_scamper_poses']
+        # names = ['0-MPI_HDM05_tr_HDM_tr_05-03_04_120_poses']
         #################################################################################################
         name2idx = {name: idx for idx, name in enumerate(self._motion_data_keys)}
         # names = [handstands[5]] #[break_dance[0]] #
@@ -612,17 +615,20 @@ class MotionLibBase():
         # names=ballet   
         # names=throw_failed1_subset3
         # names = second_kicks_punches
-        # names = break_dance # + front_flips
+        # names = break_dance#[0] # + front_flips
+        # names = [break_dance[0]]#[0] # + front_flips
+
         # clip_motion = False
         # names = limp_failed1_subset1
         # names= handstands_failed3_subset1
         # names= third_kicks_punches
-        # names = fourth_basketball
+        # names = fourth_basketball 
         # names = cartwheels_failed3_subset3
         # names = [names[1]]
         # names = [back_flips[6]]
         # names = limp_failed1_subset1
-        # names = second_kicks_punches
+        names = second_kicks_punches
+        # names = cartwheels_failed3_subset3
         # names = handstands_failed2_subset2
         # names = throw_failed1_subset1
         #names = FAILED_MOT_1 # 
@@ -633,21 +639,22 @@ class MotionLibBase():
         # names = FAILED_MOT_1
         # names = FLIPS
         # len(names)      
-
-        names = ['0-SSM_synced_20160930_50032_punch_kick_sync_poses']
-        names =['0-Transitions_mocap_mazen_c3d_walksideways_running_poses']
-        names = [   '0-Transitions_mocap_mazen_c3d_devishdance_kick_poses',
-                    '0-Transitions_mocap_mazen_c3d_sit_jumpinplace_poses',
-                    '0-Transitions_mocap_mazen_c3d_walksideways_running_poses',
-                    '0-Transitions_mocap_mazen_c3d_walksideways_runbackwards_poses',
-                    '0-SSM_synced_20161014_50033_dribble_kick_sync_poses',
-                    '0-SSM_synced_20161014_50033_punch_kick_sync_poses',
-                    '0-SSM_synced_20160930_50032_punch_kick_sync_poses',  
-                    ] 
+    
+        # names = ['0-SSM_synced_20160930_50032_punch_kick_sync_poses']
+        # names =['0-Transitions_mocap_mazen_c3d_walksideways_running_poses']
+        # names = [   '0-Transitions_mocap_mazen_c3d_devishdance_kick_poses',
+        #             '0-Transitions_mocap_mazen_c3d_sit_jumpinplace_poses',
+        #             '0-Transitions_mocap_mazen_c3d_walksideways_running_poses',
+        #             '0-Transitions_mocap_mazen_c3d_walksideways_runbackwards_poses',
+        #             '0-SSM_synced_20161014_50033_dribble_kick_sync_poses',
+        #             '0-SSM_synced_20161014_50033_punch_kick_sync_poses',
+        #             '0-SSM_synced_20160930_50032_punch_kick_sync_poses',  
+        #             ] 
+        # names = [   '0-Transitions_mocap_mazen_c3d_devishdance_kick_poses' ]
 
         sample_idxes = torch.tensor([name2idx[name] for name in names], device=self._device)
         sample_idxes = torch.sort(sample_idxes).values.repeat(550)
-        # np.random.shuffle(sample_idxes)     
+        np.random.shuffle(sample_idxes)     
         sample_idxes= sample_idxes[:len(skeleton_trees)]
 
         # #################################################################################################
@@ -769,15 +776,12 @@ class MotionLibBase():
         # sample_idxes = sample_idxes.repeat_interleave(num_duplicates)
 
 
-
         # start_idx = self.collect_start_idx
         # end_idx = min(start_idx + self.collect_step_idx, self._num_unique_motions )
         # sample_idxes = np.arange(start_idx, end_idx)
-        # sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
+        # # sample_idxes = torch.tensor(sample_idxes, dtype=torch.long, device=self._device)
         # sample_idxes = sample_idxes[:len(skeleton_trees)]
-
-
-
+        
         #######################################################################################3
 
         if isinstance(sample_idxes, np.ndarray):

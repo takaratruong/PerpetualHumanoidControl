@@ -16,22 +16,22 @@ SMPL_BONE_ORDER_NAMES = [
     "L_Knee",
     "R_Knee",
     "Spine",
-    "L_Ankle",
-    "R_Ankle",
+    "L_Ankle", # 7
+    "R_Ankle", # 8
     "Chest",
-    "L_Toe",
-    "R_Toe",
+    "L_Toe", 
+    "R_Toe", 
     "Neck",
     "L_Thorax",
     "R_Thorax",
-    "Head",
+    "Head", # 15
     "L_Shoulder",
     "R_Shoulder",
     "L_Elbow",
     "R_Elbow",
-    "L_Wrist",
-    "R_Wrist",
-    "L_Hand",
+    "L_Wrist", # 21
+    "R_Wrist", # 22
+    "L_Hand", 
     "R_Hand",
 ]
 

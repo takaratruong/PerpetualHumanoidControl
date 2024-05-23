@@ -80,7 +80,7 @@ def main():
     smpl_mesh.triangles = o3d.utility.Vector3iVector(faces)
     # smpl_mesh.compute_triangle_normals()
     smpl_mesh.compute_vertex_normals()
-
+    
     groun_plane = rendering.MaterialRecord()
     groun_plane.base_color = [1, 1, 1, 1]
     # groun_plane.shader = "defaultLit"

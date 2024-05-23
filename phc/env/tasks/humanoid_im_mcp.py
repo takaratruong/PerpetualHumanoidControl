@@ -88,7 +88,15 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
             if self.use_noisy_action:
                 # actions = torch.normal(mean=actions,std=.025).clone() # NOISE
                 # Michael - changed to 0.0 for ground truth data collection
-                actions = torch.normal(mean=actions,std=self.act_noise).clone() # NOISE #.04 # max noise:  #.15 falls , .12 okay but bounces around, .1
+                actions = torch.normal(mean=actions,std=self.act_noise).clone()# NOISE #.04 # max noise:  #.15 falls , .12 okay but bounces around, .1
+                
+                #hip noise
+                actions[:,[0,1,2,12,13,14]] = torch.normal(mean=actions,std=self.act_noise*1.5).clone()[:,[0,1,2,12,13,14]] 
+                
+                # knee noise 
+                actions[:,[4, 16]] = torch.normal(mean=actions,std=self.act_noise*1.25).clone()[:,[4, 16]] 
+
+
         else:
             actions = weights 
 

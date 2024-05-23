@@ -168,7 +168,7 @@
     </body>
   </worldbody>
   <actuator>
-    <motor name="L_Hip_x" joint="L_Hip_x" gear="500"/>
+    <motor name="L_Hip_x" joint="L_Hip_x" gear="500"/> 
     <motor name="L_Hip_y" joint="L_Hip_y" gear="500"/>
     <motor name="L_Hip_z" joint="L_Hip_z" gear="500"/>
     <motor name="L_Knee_x" joint="L_Knee_x" gear="500"/>

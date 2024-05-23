@@ -1195,7 +1195,6 @@ class Humanoid(BaseTask):
         else:
             body_shape_params = self.humanoid_shapes[env_ids]
         x = compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, self._dof_obs_size, self._dof_offsets, body_shape_params, self._local_root_obs, self._root_height_obs, self._has_upright_start, self._has_shape_obs)
-            
         
         return obs
 
@@ -1598,7 +1597,8 @@ def compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_ve
     flat_local_key_pos = local_end_pos.view(local_key_body_pos.shape[0], local_key_body_pos.shape[1] * local_key_body_pos.shape[2])
 
     dof_obs = dof_to_obs(dof_pos, dof_obs_size, dof_offsets)
-
+    # import ipdb;ipdb.set_trace()
+    
     obs_list = []
     if root_height_obs:
         obs_list.append(root_h_obs)
@@ -1610,6 +1610,7 @@ def compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_ve
         dof_vel,
         flat_local_key_pos,
     ]
+    
     if has_smpl_params:
         obs_list.append(smpl_params)
     

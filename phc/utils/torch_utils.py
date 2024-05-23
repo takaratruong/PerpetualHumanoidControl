@@ -119,7 +119,7 @@ def tan_norm_to_mat(tan_norm):
     tan = tan_norm.view(-1, 2, 3)[:, 0]
     norm = tan_norm.view(-1, 2, 3)[:, 1]
     tan_n = F.normalize(tan, dim=-1)
-
+    
     norm_n = norm - (tan_n * norm).sum(-1, keepdim=True) * tan_n
     norm_n = F.normalize(norm_n, dim=-1)
 
