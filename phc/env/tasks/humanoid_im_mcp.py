@@ -55,51 +55,26 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
         # if self.dr_randomizations.get('actions', None):
         #     actions = self.dr_randomizations['actions']['noise_lambda'](actions)
         # if flags.server_mode:
-        # t_s = time.time()
-        # import ipdb; ipdb.set_trace()
-        if weights.shape[1]==4:
-                
-            with torch.no_grad():
-                # Apply trained Model.
-                curr_obs = ((self.obs_buf - self.running_mean.float()) / torch.sqrt(self.running_var.float() + 1e-05))
-                
-                curr_obs = torch.clamp(curr_obs, min=-5.0, max=5.0)
-                if self.discrete_mcp:
-                    max_idx = torch.argmax(weights, dim=1)
-                    weights = torch.nn.functional.one_hot(max_idx, num_classes=self.num_prim).float()
-                
-                if self.has_pnn:
-                    _, actions = self.pnn(curr_obs)
-                    
-                    x_all = torch.stack(actions, dim=1)
-                else:
-                    x_all = torch.stack([net(curr_obs) for net in self.actors], dim=1)
-                actions = torch.sum(weights[:, :, None] * x_all, dim=1)
+            # t_s = time.time()
+        
+        with torch.no_grad():
+            # Apply trained Model.
+            curr_obs = ((self.obs_buf - self.running_mean.float()) / torch.sqrt(self.running_var.float() + 1e-05))
             
-            # COLLECTING ACTIONS
-            self.mean_action = actions.squeeze().cpu().numpy() 
-            # self.noisy_action = torch.normal(mean=actions,std=.03).clone().squeeze().cpu().numpy() # NOISE
-            # self.act_collect = np.vstack((self.act_collect, actions.squeeze().cpu().numpy())) if self.act_collect is not None else actions.squeeze().cpu().numpy() # TAKARA
-            # print('actions: ', self.act_collect.shape)
+            curr_obs = torch.clamp(curr_obs, min=-5.0, max=5.0)
+            if self.discrete_mcp:
+                max_idx = torch.argmax(weights, dim=1)
+                weights = torch.nn.functional.one_hot(max_idx, num_classes=self.num_prim).float()
             
-            # if self.act_collect.shape[0] == 500: 
-            #     np.save('actions.npy', self.act_collect)
-            
-            if self.use_noisy_action:
-                # actions = torch.normal(mean=actions,std=.025).clone() # NOISE
-                # Michael - changed to 0.0 for ground truth data collection
-                actions = torch.normal(mean=actions,std=self.act_noise).clone()# NOISE #.04 # max noise:  #.15 falls , .12 okay but bounces around, .1
+            if self.has_pnn:
+                _, actions = self.pnn(curr_obs)
                 
-                #hip noise
-                actions[:,[0,1,2,12,13,14]] = torch.normal(mean=actions,std=self.act_noise*1.5).clone()[:,[0,1,2,12,13,14]] 
-                
-                # knee noise 
-                actions[:,[4, 16]] = torch.normal(mean=actions,std=self.act_noise*1.25).clone()[:,[4, 16]] 
-
-
-        else:
-            actions = weights 
-
+                x_all = torch.stack(actions, dim=1)
+            else:
+                x_all = torch.stack([net(curr_obs) for net in self.actors], dim=1)
+            # print(weights)
+            actions = torch.sum(weights[:, :, None] * x_all, dim=1)
+        
         # actions = x_all[:, 3]  # Debugging
         # apply actions
         self.pre_physics_step(actions)

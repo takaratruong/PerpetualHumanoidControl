@@ -22,7 +22,7 @@ import copy
 from phc.utils.torch_utils import project_to_norm
 import learning.amp_datasets as amp_datasets
 from phc.learning.loss_functions import kl_multi
-from uhc.utils.math_utils import LinearAnneal
+from smpl_sim.utils.math_utils import LinearAnneal
 
 def load_my_state_dict(target, saved_dict):
     for name, param in saved_dict.items():
@@ -58,11 +58,10 @@ class AMPAgent(common_agent.CommonAgent):
         # ZL Hack
         if self.vec_env.env.task.fitting:
             print("#################### Fitting and freezing!! ####################")
-            checkpoint = torch_ext.load_checkpoint(self.vec_env.env.task.models_path[0])
-            
-            self.set_stats_weights(checkpoint)  # loads mean std. essential for distilling knowledge. will not load if has a shape mismatch.
+            # checkpoint = torch_ext.load_checkpoint(self.vec_env.env.task.models_path[0])
+            # self.set_stats_weights(checkpoint)  # loads mean std. essential for distilling knowledge. will not load if has a shape mismatch.
             self.freeze_state_weights()  # freeze the mean stds.
-            load_my_state_dict(self.model.state_dict(), checkpoint['model'])  # loads everything (model, std, ect.). that can be load from the last model.
+            # load_my_state_dict(self.model.state_dict(), checkpoint['model'])  # loads everything (model, std, ect.). that can be load from the last model.
             # self.value_mean_std # not freezing value function though.
         
         return
@@ -507,7 +506,7 @@ class AMPAgent(common_agent.CommonAgent):
     def pre_epoch(self, epoch_num):
         # print("freeze running mean/std")
 
-        if self.vec_env.env.task.smpl_humanoid:
+        if self.vec_env.env.task.humanoid_type in ["smpl", "smplh", "smplx"]:
             humanoid_env = self.vec_env.env.task
             if (epoch_num > 1) and epoch_num % humanoid_env.shape_resampling_interval == 1: # + 1 to evade the evaluations. 
             # if (epoch_num > 0) and epoch_num % humanoid_env.shape_resampling_interval == 0 and not (epoch_num % (self.save_freq)): # Remove the resampling for this. 
@@ -922,8 +921,8 @@ class AMPAgent(common_agent.CommonAgent):
         if "mb_rewards" in train_info:
             train_info_dict['mb_rewards'] = train_info['mb_rewards'].mean().item()
         
-        if 'terminated_flags' in train_info:
-            train_info_dict["success_rate"] =  1 - torch.mean((train_info['terminated_flags'] > 0).float()).item()
+        # if 'terminated_flags' in train_info:
+        #     train_info_dict["success_rate"] =  1 - torch.mean((train_info['terminated_flags'] > 0).float()).item()
         
         if "reward_raw" in train_info:
             for idx, v in enumerate(train_info['reward_raw'].cpu().numpy().tolist()):

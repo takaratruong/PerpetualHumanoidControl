@@ -450,11 +450,10 @@ class MotionlibMode(Enum):
     
 class MotionLibBase():
 
-    def __init__(self, motion_file,  device, fix_height=FixHeightMode.full_fix, masterfoot_conifg=None, min_length=-1, im_eval=False, multi_thread=True,
-    collect_start_idx=0, collect_step_idx=None,
-    m2t_map_path=None, mode=None
-    ):
-        self._device = device
+    def __init__(self, motion_lib_cfg):
+        self.m_cfg = motion_lib_cfg
+        self._device = self.m_cfg.device
+        
         self.mesh_parsers = None
 
         # MICHAEL===
@@ -470,16 +469,11 @@ class MotionLibBase():
     
         # ===
         
-        self.load_data(motion_file,  min_length = min_length, im_eval = im_eval)
-        self.setup_constants(fix_height = fix_height, masterfoot_conifg = masterfoot_conifg, multi_thread = multi_thread)
-
-        
+        self.load_data(self.m_cfg.motion_file,  min_length = self.m_cfg.min_length, im_eval = self.m_cfg.im_eval)
+        self.setup_constants(fix_height = self.m_cfg.fix_height,  multi_thread = self.m_cfg.multi_thread)
 
         if flags.real_traj:
-            if self._masterfoot_conifg is None:
-                self.track_idx = self._motion_data_load[next(iter(self._motion_data_load))].get("track_idx", [13, 18, 23])   
-            else:
-                self.track_idx = self._motion_data_load[next(iter(self._motion_data_load))].get("track_idx", [19, 24, 29])
+            self.track_idx = self._motion_data_load[next(iter(self._motion_data_load))].get("track_idx", [19, 24, 29])
         return
         
     def load_data(self, motion_file,  min_length=-1, im_eval = False):
@@ -515,8 +509,7 @@ class MotionLibBase():
         if self.mode == MotionlibMode.directory:
             self._motion_data_load = joblib.load(self._motion_data_load[0]) # set self._motion_data_load to a sample of the data 
 
-    def setup_constants(self, fix_height = FixHeightMode.full_fix, masterfoot_conifg=None, multi_thread = True):
-        self._masterfoot_conifg = masterfoot_conifg
+    def setup_constants(self, fix_height = FixHeightMode.full_fix, multi_thread = True):
         self.fix_height = fix_height
         self.multi_thread = multi_thread
         
@@ -530,7 +523,7 @@ class MotionLibBase():
         
         
     @staticmethod
-    def load_motion_with_skeleton(ids, motion_data_list, skeleton_trees, gender_betas, fix_height, mesh_parsers, masterfoot_config, max_len, queue, pid):
+    def load_motion_with_skeleton(ids, motion_data_list, skeleton_trees, shape_params, mesh_parsers, config, queue, pid):
         raise NotImplementedError
 
     @staticmethod
@@ -821,7 +814,7 @@ class MotionLibBase():
         chunk = np.ceil(len(jobs) / num_jobs).astype(int)
         ids = np.arange(len(jobs))
 
-        jobs = [(ids[i:i + chunk], jobs[i:i + chunk], skeleton_trees[i:i + chunk], gender_betas[i:i + chunk], self.fix_height, self.mesh_parsers, self._masterfoot_conifg, max_len) for i in range(0, len(jobs), chunk)]
+        jobs = [(ids[i:i + chunk], jobs[i:i + chunk], skeleton_trees[i:i + chunk], gender_betas[i:i + chunk],  self.mesh_parsers, self.m_cfg) for i in range(0, len(jobs), chunk)]
         job_args = [jobs[i] for i in range(len(jobs))]
         for i in range(1, len(jobs)):
             worker_args = (*job_args[i], queue, i)
@@ -1003,7 +996,7 @@ class MotionLibBase():
             self._sampling_prob = torch.ones(self._num_unique_motions).to(self._device) / self._num_unique_motions  # For use in sampling batches
 
     def update_sampling_prob(self, termination_history):
-        if len(termination_history) == len(self._termination_history):
+        if len(termination_history) == len(self._termination_history) and termination_history.sum() > 0:
             self._sampling_prob[:] = termination_history/termination_history.sum()
             self._termination_history = termination_history
             return True

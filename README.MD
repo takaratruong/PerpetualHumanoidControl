@@ -24,10 +24,25 @@ Official implementation of ICCV 2023 paper: "Perpetual Humanoid Control for Real
 * [Training](#training)
     * [Data Processing AMASS](#data-processing-amass)
     * [Training PHC](#training-phc)
+* [Trouble Shooting](#trouble-shooting)
+    * [Multiprocessing Issues](#multiprocessing-issues)
+    * [Success Rate](#success-rate)
 * [Citation](#citation)
 * [References](#references)
 
 ## News 🚩
+
+[Apirl 5, 2024] Upgrading to use [SMPLSim](https://github.com/ZhengyiLuo/SMPLSim) to automatically create the SMPL humanoid. Please run `pip install git+https://github.com/ZhengyiLuo/SMPLSim.git@master` to SMPLSim. SMPLSim requires python 3.8; for python 3.7, please `pip install git+https://github.com/ZhengyiLuo/SMPLSim.git@isaac37`.
+
+[Feburary 28, 2024] Releasing Auto-PMCP procedure to train single primitives; this procedure can lead to very high-performant imiatators without PNN, though it wouldn't have the failure state recovery capability. See the `auto_pmcp_soft` flag. 
+
+[Feburary 19, 2024] Releasing PHC+ model (100% success rate on AMASS) used in [PULSE](https://zhengyiluo.github.io/PULSE/).
+
+[Feburary 17, 2024] Fixed a bug when overhauling the system to Hydra. Please pull the newest version :). 
+
+[Feburary 1, 2024] Overhauling the config system to Hydra. 
+
+[January 8, 2024] Support for running inference without SMPL model. 
 
 [January 7, 2024] Release language-to-control demo (based on MDM). 
 
@@ -44,7 +59,7 @@ Official implementation of ICCV 2023 paper: "Perpetual Humanoid Control for Real
 
 - [ ] Add support for smplx/h (fingers!!!).
 
-- [ ] Release PHC+ model (100% success rate on AMASS) used in [PULSE](https://zhengyiluo.github.io/PULSE/). 
+- [x] Release PHC+ model (100% success rate on AMASS) used in [PULSE](https://zhengyiluo.github.io/PULSE/). 
 
 - [x] Release language-based demo code.  
 
@@ -63,6 +78,8 @@ We present a physics-based humanoid controller that achieves high-fidelity motio
 
 > ❗️❗️❗️Notice that the current released models used a different coordinate system as SMPL (with negative z as gravity direction), and the humanoid is modifed in a way such that it is facing positive x direction (instead of the original SMPL facing). This is reflected in a "up_right_start" flag in the humanoid robot (`smpl_local_robot.py`) configuration. This is done to make the humanoid's heading to be eailerly defined and flipping left and right easier, but would require further modification for converting back to SMPL (which is provided in the code). In the future I am working towards removing this modification. 
 
+> ❗️❗️❗️ Another notice is that while the MCP/Mixture of expert model is great for achieving high success rate, it is not absolutely necessary for the PHC to work. The PHC can work with a single primitive model and achieves high success rate; though it wouldn't have the failure state recovery capability.
+
 ### Docs 
 - [Docs on SMPL_Robot](docs/smpl_robot_instruction.MD)
 - [Docker Instructions](docs/docker_instruction.MD) (from [@kexul](https://github.com/kexul))
@@ -78,6 +95,7 @@ All evaluation is done using the mean SMPL body pose and adjust the height, usin
 | PHC           | 98.9% |     37.5     | 3.3 |
 | PHC-KP          | 98.7% |     40.7     | 3.5 |
 | PHC+ [in Pulse](https://zhengyiluo.github.io/PULSE/)  | 100% |     26.6     | 2.7 |
+| PHC-Prim (single primitive) | 99.9% |     25.9     | 2.3 |
 | PHC-Fut (using future) | 100% |     25.3     | 2.5 |
 
 ### Dependencies
@@ -96,7 +114,7 @@ pip install -r requirement.txt
 2. Download and setup [Isaac Gym](https://developer.nvidia.com/isaac-gym). 
 
 
-3. Download SMPL paramters from [SMPL](https://smpl.is.tue.mpg.de/). Put them in the `data/smpl` folder, unzip them into 'data/smpl' folder. Please download the v1.1.0 version, which contains the neutral humanoid. Rename the files `basicmodel_neutral_lbs_10_207_0_v1.1.0`, `basicmodel_m_lbs_10_207_0_v1.1.0.pkl`, `basicmodel_f_lbs_10_207_0_v1.1.0.pkl` to `SMPL_NEUTRAL.pkl`, `SMPL_MALE.pkl` and `SMPL_FEMALE.pkl`. Rename The file structure should look like this:
+3. [Optional if only inference] Download SMPL paramters from [SMPL](https://smpl.is.tue.mpg.de/). Put them in the `data/smpl` folder, unzip them into 'data/smpl' folder. Please download the v1.1.0 version, which contains the neutral humanoid. Rename the files `basicmodel_neutral_lbs_10_207_0_v1.1.0`, `basicmodel_m_lbs_10_207_0_v1.1.0.pkl`, `basicmodel_f_lbs_10_207_0_v1.1.0.pkl` to `SMPL_NEUTRAL.pkl`, `SMPL_MALE.pkl` and `SMPL_FEMALE.pkl`. Rename The file structure should look like this:
 
 ```
 
@@ -111,9 +129,11 @@ pip install -r requirement.txt
 
 Make sure you have the SMPL paramters properly setup by running the following scripts:
 ```
-python uhc/smpllib/smpl_local_robot.py
+python scripts/vis/vis_motion_mj.py
 python scripts/joint_monkey_smpl.py
 ```
+
+The SMPL model is used to adjust the height the humanoid robot to avoid penetnration with the ground during data loading. 
 
 4. Use the following script to download trained models and sample data.
 
@@ -142,11 +162,11 @@ To evaluate with your own SMPL data, see the script `scripts/data_process/conver
 | ; | cancel screen shot|
 | m | cancel termination based on imitation |
 
-... more shortcut can be found in `pacer/env/tasks/base_task.py`
+... more shortcut can be found in `phc/env/tasks/base_task.py`
 
-Notes on rendering: I am using pyvirtualdisplay to record the video such that you can see all humanoids at the same time (default function will only capture the first environment). You can disable it using the flag `--no_virtual_display`. 
+Notes on rendering: I am using pyvirtualdisplay to record the video such that you can see all humanoids at the same time (default function will only capture the first environment). You can disable it using the flag `no_virtual_display=True`. 
 
-You can use the `--render_o3d --no_virtual_display` flag to render the SMPL mesh together with your Isaac Gym simulation in real time like this: 
+You can use the `render_o3d=True no_virtual_display=True` flag to render the SMPL mesh together with your Isaac Gym simulation in real time like this: 
 <div float="center">
   <img src="assets/open3d.gif" />
 </div>
@@ -155,34 +175,50 @@ to do the above visulaization, press m (to cancel termination based on imitation
 
 ### Imitation 
 
+🎇🎇🎇 New (keypoint model, can getup from the ground and walk back) | Best model for video/language model
+```
+python phc/run_hydra.py learning=im_mcp_big learning.params.network.ending_act=False exp_name=phc_comp_kp_2 env.obs_v=7 env=env_im_getup_mcp robot=smpl_humanoid robot.real_weight_porpotion_boxes=False env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_kp_2/Humanoid.pth'] env.num_prim=3 env.num_envs=1  headless=False epoch=-1 test=True
+```
+
+🎇🎇🎇 New (rotation + keypoint model, can getup from the ground but not walk back -- model used in PULSE due to time constraint)
+```
+python phc/run_hydra.py learning=im_mcp_big  exp_name=phc_comp_3 env=env_im_getup_mcp robot=smpl_humanoid env.zero_out_far=False robot.real_weight_porpotion_boxes=False env.num_prim=3 env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_3/Humanoid.pth'] env.num_envs=1  headless=False epoch=-1 test=True
+```
+
 Evaluate full model:
 
 ```
 ## Shape + rotation + keypoint model
-python phc/run.py --task HumanoidImMCPGetup --cfg_env phc/data/cfg/phc_shape_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_shape_mcp_iccv --test --num_envs 1 --epoch -1  --no_virtual_display
+
+python phc/run_hydra.py learning=im_mcp exp_name=phc_shape_mcp_iccv test=True env=env_im_getup_mcp robot=smpl_humanoid_shape robot.freeze_hand=True robot.box_body=False env.z_activation=relu env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_shape_pnn_iccv/Humanoid.pth'] env.num_envs=1  headless=False epoch=-1
+
+
 
 ## keypoint model
-python phc/run.py --task HumanoidImMCPGetup --cfg_env phc/data/cfg/phc_kp_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_kp_mcp_iccv --test --num_envs 1 --epoch -1  --no_virtual_display
+python phc/run_hydra.py learning=im_mcp exp_name=phc_kp_mcp_iccv  test=True env=env_im_getup_mcp robot=smpl_humanoid robot.freeze_hand=True robot.box_body=False env.z_activation=relu env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_kp_pnn_iccv/Humanoid.pth'] env.num_envs=1 env.obs_v=7 headless=False epoch=-1
+
 ```
 
 Evaluate on AMASS:
 
 ```
 ## Shape + rotation + keypoint model
-python phc/run.py --task HumanoidImMCPGetup --cfg_env phc/data/cfg/phc_shape_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file sample_data/[amass_data].pkl --network_path output/phc_shape_mcp_iccv --test --num_envs 1024 --epoch -1 --im_eval
+python phc/run_hydra.py learning=im_mcp exp_name=phc_shape_mcp_iccv epoch=-1 test=True env=env_im_getup_mcp robot=smpl_humanoid_shape robot.freeze_hand=True robot.box_body=False env.z_activation=relu env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_shape_pnn_iccv/Humanoid.pth'] env.num_envs=1  headless=False im_eval=True
+
 
 ## keypoint model
-python phc/run.py --task HumanoidImMCPGetup --cfg_env phc/data/cfg/phc_kp_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file sample_data/[amass_data].pkl --network_path output/phc_kp_mcp_iccv --test --num_envs 1024 --epoch -1 --im_eval
+python phc/run_hydra.py learning=im_mcp exp_name=phc_kp_mcp_iccv epoch=-1 test=True env=env_im_getup_mcp robot=smpl_humanoid robot.freeze_hand=True robot.box_body=False env.z_activation=relu env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_kp_pnn_iccv/Humanoid.pth'] env.num_envs=1024 env.obs_v=7  im_eval=True
 ```
 
 Evaluate single primitive model:
 
 ```
 ## Shape + rotation + keypoint model
-python phc/run.py --task HumanoidIm --cfg_env phc/data/cfg/phc_shape_pnn_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_pnn.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_shape_pnn_iccv --test --num_envs 1 --epoch -1  --no_virtual_display
+python phc/run_hydra.py learning=im_pnn exp_name=phc_shape_pnn_iccv epoch=-1 test=True env=env_im_pnn robot=smpl_humanoid_shape robot.freeze_hand=True robot.box_body=False env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl  env.num_envs=1  headless=False
+
 
 ## keypoint model
-python phc/run.py --task HumanoidIm --cfg_env phc/data/cfg/phc_kp_pnn_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_pnn.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_kp_pnn_iccv --test --num_envs 1 --epoch -1  --no_virtual_display
+python phc/run_hydra.py learning=im_pnn exp_name=phc_kp_pnn_iccv epoch=-1 test=True env=env_im_pnn env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl robot.freeze_hand=True robot.box_body=False env.num_envs=1 env.obs_v=7  headless=False
 ```
 
 ### In-the-wild Avatar Control
@@ -198,7 +234,7 @@ python scripts/demo/video_to_pose_server.py
 then
 
 ```
-python phc/run.py --task HumanoidImMCPDemo --cfg_env phc/data/cfg/phc_kp_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_kp_mcp_iccv --test --num_envs 1 --epoch -1  --no_virtual_display
+python phc/run_hydra.py learning=im_mcp exp_name=phc_kp_mcp_iccv env=env_im_getup_mcp env.task=HumanoidImMCPDemo robot=smpl_humanoid robot.freeze_hand=True robot.box_body=False env.z_activation=relu env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_kp_pnn_iccv/Humanoid.pth'] env.num_envs=1 env.obs_v=7 headless=False epoch=-1 test=True no_virtual_display=True
 
 ```
 
@@ -206,15 +242,14 @@ python phc/run.py --task HumanoidImMCPDemo --cfg_env phc/data/cfg/phc_kp_mcp_icc
 See [Language-to-motion Demo](docs/language_to_control_demo.md)
 
 ```
-python phc/run.py --task HumanoidImMCPDemo --cfg_env phc/data/cfg/phc_kp_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_kp_mcp_iccv --test --num_envs 1 --epoch -1  --no_virtual_display
+python phc/run_hydra.py learning=im_mcp exp_name=phc_kp_mcp_iccv env=env_im_getup_mcp env.task=HumanoidImMCPDemo robot=smpl_humanoid robot.freeze_hand=True robot.box_body=False env.z_activation=relu env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.models=['output/HumanoidIm/phc_kp_pnn_iccv/Humanoid.pth'] env.num_envs=1 env.obs_v=7 headless=False epoch=-1 test=True no_virtual_display=True
 
 ```
 
 ### VR Controller Tracking
 
 ```
-python phc/run.py --task HumanoidIm --cfg_env phc/data/cfg/phc_prim_vr.yaml --cfg_train phc/data/cfg/train/rlg/im_big.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_prim_vr --test --num_envs 1 --epoch -1  --no_virtual_display
-
+python phc/run_hydra.py learning=im_big exp_name=phc_prim_vr env=env_vr robot=smpl_humanoid robot.box_body=False env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl env.num_envs=1 headless=False epoch=-1 test=True no_virtual_display=True
 ```
 
 
@@ -248,48 +283,52 @@ python scripts/data_process/convert_amass_isaac.py
 
 Which should give you 11313 sequences for trainig. 
 
+
+You can also directly using the script `python scripts/data_process/convert_amass_data.py`
+
 ### Training PHC
 
-[This section is still under contruction. Proceed with caution.]
+#### Train single primitive
+
+```
+python phc/run_hydra.py learning=im_big exp_name=phc_prim env=env_im robot=smpl_humanoid env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl  
+```
+
+
+#### Train full PNN model 
+
 
 Training PHC is not super automated yet, so it requires some (a lot of) manual steps, and invovles changing the config file a couple of times during training based on the training phase. The `phc_shape_pnn_train_iccv.yaml` config file provides a starting point for training primitives. 
 
 First, we will train one primitive, and keep an eye on its performance (--has_eval) flag. In the config, the "training_prim" is the primitive that is being trained. This need to be updated accordingly. 
 
 ```
-python phc/run.py --task HumanoidIm --cfg_env phc/data/cfg/phc_shape_pnn_train_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_pnn.yaml --motion_file data/amass/pkls/amass_isaac_im_train_take6_upright_slim.pkl --network_path output/phc_shape_pnn_train_iccv --headless --has_eval
+python phc/run_hydra.py learning=im_pnn_big env=env_im_pnn robot=smpl_humanoid env.motion_file=[motion_file] exp_name=[exp_name] 
 ```
 
 After the performance plateaus, we will dump the most recent sequences that the primitives has failed on, and use them to train the next primitive. Here idx is the primitive that should be trained. 
 
 ```
-python scripts/pmcp/forward_pmcp.py --exp phc_shape_mcp_iccv --epoch {} --idx {idx}
+python scripts/pmcp/forward_pmcp.py --exp [exp_name] --epoch [epoch] --idx {idx}
 ```
-The above script will dump two files: one is the next hard sequences to learn, and anothere one is the checkpoint to resume with the copied primitive. In this step, we need to modify the config file's two fields: "training_prim" and "fitting", they should look like: 
+The above script will dump two files: one is the next hard sequences to learn, and anothere one is the checkpoint to resume with the copied primitive. 
 
-training_prim: 1 # advancing the primitive to train. 
-fitting: True # Fitting flag freezes the running mean and std. This is very important for resuable primitives. 
-
+To train the next primitive, run teh following script:
 ```
-python phc/run.py --task HumanoidIm --cfg_env phc/data/cfg/phc_shape_pnn_train_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_pnn.yaml --motion_file data/amass/pkls/auto_pmcp/{exp_name}_{epoch}.pkl --network_path output/phc_shape_pnn_train_iccv --headless --has_eval --epoch {epoch} 
+python phc/run_hydra.py learning=im_pnn_big env=env_im_pnn robot=smpl_humanoid env.motion_file=[motion_file] epoch=[include epoch+1 from previous step] env.fitting=True env.training_prim=1
 ```
 
-Repeat this process until no hard sequences are left. Then, to train the fail-state recovery primitive on simple locomotion data, change the following flags: 
-training_prim: ++1 # advancing the primitive to train. 
-zero_out_far: True
-zero_out_far_train: True
-getup_udpate_epoch: {epoch}
+Repeat this process until no hard sequences are left. Then, to train the fail-state recovery primitive on simple locomotion data. 
 
 
 ```
-python phc/run.py --task HumanoidImGetup --cfg_env phc/data/cfg/phc_shape_pnn_train_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_pnn.yaml --motion_file data/amass/pkls/amass_isaac_run_take6_upright_slim.pkl --network_path output/phc_shape_pnn_train_iccv --headless --has_eval --epoch {epoch} 
+python phc/run_hydra.py learning=im_pnn_big exp_name=phc_shape_pnn_iccv env=env_im_pnn robot=smpl_humanoid env.motion_file=[motion_file] epoch=[include current epoch + 1 from the forward_pmcp step] env.fitting=True env.training_prim=[+1] env.zero_out_far=True env.zero_out_far_train=True env.getup_udpate_epoch={epoch}
 ```
-
 
 After all primitives are trained, train the composer: 
 
 ```
-python phc/run.py --task HumanoidImMCPGetup --cfg_env phc/data/cfg/phc_shape_mcp_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im_mcp.yaml --motion_file sample_data/amass_isaac_standing_upright_slim.pkl --network_path output/phc_shape_mcp_iccv --has_eval --headless 
+python phc/run_hydra.py learning=im_mcp_big exp_name=[] env=env_im_getup_mcp robot=smpl_humanoid env.motion_file=[motion_file] env.models=['output/HumanoidIm/{exp_name}/Humanoid.pth']
 ```
 
 When training the composer, you can repeat the process above (progressive mining hard sequences) to improve performance. 
@@ -297,9 +336,28 @@ When training the composer, you can repeat the process above (progressive mining
 
 You can also just train one model for imitation (no PNN):
 ```
-python phc/run.py --task HumanoidIm --cfg_env phc/data/cfg/phc_prim_iccv.yaml --cfg_train phc/data/cfg/train/rlg/im.yaml --motion_file data/amass/pkls/amass_isaac_im_train_take6_upright_slim.pkl --network_path output/phc_prim_iccv --headless --has_eval
+python phc/run_hydra.py learning=im exp_name=phc_prim_iccv  env=env_im robot=smpl_humanoid_shape robot.freeze_hand=True robot.box_body=False env.motion_file=sample_data/amass_isaac_standing_upright_slim.pkl
 ```
 
+## Trouble Shooting
+
+
+### Multiprocessing Issues
+See [this issue](https://github.com/ZhengyiLuo/PerpetualHumanoidControl/issues/17) for some discusssions. 
+
+For the data loading part, try use: 
+
+at [this line](https://github.com/ZhengyiLuo/PerpetualHumanoidControl/blob/8e01930fbcaa3efb9fb8b4752f2cf52f41dfe260/phc/utils/motion_lib_base.py#L235), bascially, uncomment: 
+
+```
+mp.set_sharing_strategy('file_system')
+```
+
+which should fix the issue. Though using file_system has caused me problems before as well.
+
+
+### Success Rate
+The success rate is reported as "eval_success_rate" in the wandb logging, not the "success_rate", which is a episodic success rate used during training. 
 
 
 ## Citation

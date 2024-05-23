@@ -14,9 +14,9 @@ from pathlib import Path
 
 sys.path.append(os.getcwd())
 
-from uhc.khrylib.utils import get_body_qposaddr
-from uhc.smpllib.smpl_mujoco import SMPL_BONE_ORDER_NAMES as joint_names
-from uhc.smpllib.smpl_local_robot import SMPL_Robot as LocalRobot
+from smpl_sim.khrylib.utils import get_body_qposaddr
+from smpl_sim.smpllib.smpl_mujoco import SMPL_BONE_ORDER_NAMES as joint_names
+from smpl_sim.smpllib.smpl_local_robot import SMPL_Robot as LocalRobot
 import scipy.ndimage.filters as filters
 from typing import List, Optional
 from tqdm import tqdm
@@ -147,11 +147,8 @@ def run(in_file: str, out_file: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    # parser.add_argument("--in_file", type=str, default="sample_data/amass_diffPol_valid.pkl")
-    # parser.add_argument("--out_file", type=str, default="phc/data/amass/pkls/amass_diffPol_valid.pkl")
-
-    parser.add_argument("--in_file", type=str, default="sample_data/amass_clipped_motion_train.pkl")
-    parser.add_argument("--out_file", type=str, default="phc/data/amass/pkls/amass_clipped_motion_train.pkl")
+    parser.add_argument("--in_file", type=str, default="sample_data/amass_copycat_take6_train.pkl")
+    parser.add_argument("--out_file", type=str, default="data/amass/pkls/amass_isaac_im_train_take6_upright_slim.pkl")
     args = parser.parse_args()
     run(
         in_file=args.in_file,
