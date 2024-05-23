@@ -142,3 +142,11 @@ output_videos/
 *.pt
 new_trials
 gh-md-toc
+collected_data/cartwheel_10_obs-phc_sigma=0.04/phc_data_sigma=0.04_0-0_FAILED.npz
+*.npy
+*.npz 
+*.zip 
+*.out 
+*.bz2 
+phc/data/amass
+collected_data/obs-phc_sigma=0.04/failed.txt
