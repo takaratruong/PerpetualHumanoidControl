@@ -1,4 +1,9 @@
 
+slurm_out
+collected_data
+mt_metrics
+
+
 *.json
 
 # Byte-compiled / optimized / DLL files
@@ -141,6 +146,7 @@ output_videos/
 *.pkl
 *.pt
 new_trials
+<<<<<<< HEAD
 gh-md-toc
 collected_data/cartwheel_10_obs-phc_sigma=0.04/phc_data_sigma=0.04_0-0_FAILED.npz
 *.npy
@@ -150,3 +156,12 @@ collected_data/cartwheel_10_obs-phc_sigma=0.04/phc_data_sigma=0.04_0-0_FAILED.np
 *.bz2 
 phc/data/amass
 collected_data/obs-phc_sigma=0.04/failed.txt
+=======
+phc/data/
+*.npz
+*.zip 
+*.out
+train_mask_1.0.npy
+*.npy 
+
+>>>>>>> fd11a36f608314bd5170de2d4847ac0e9207f16c

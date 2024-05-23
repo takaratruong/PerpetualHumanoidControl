@@ -4,7 +4,7 @@ notes:  "PNN, no Laternal connection "
 env: 
   numEnvs: 1536
   envSpacing: 5
-  episodeLength: 300
+  episodeLength: 1600 #300
   isFlagrun: False
   enableDebugVis: False
   

@@ -118,7 +118,8 @@ class Humanoid(BaseTask):
 
 
         super().__init__(cfg=self.cfg)
-
+        # print('humanoid init done') #Takara
+        
         self.dt = self.control_freq_inv * sim_params.dt
         self._setup_tensors()
         self.self_obs_buf = torch.zeros((self.num_envs, self.get_self_obs_size()), device=self.device, dtype=torch.float)
@@ -193,14 +194,13 @@ class Humanoid(BaseTask):
         self.gym.refresh_actor_root_state_tensor(self.sim)
         self.gym.refresh_rigid_body_state_tensor(self.sim)
         self.gym.refresh_net_contact_force_tensor(self.sim)
-
         self._root_states = gymtorch.wrap_tensor(actor_root_state)
         num_actors = self.get_num_actors_per_env()
 
         self._humanoid_root_states = self._root_states.view(self.num_envs, num_actors, actor_root_state.shape[-1])[..., 0, :]
         self._initial_humanoid_root_states = self._humanoid_root_states.clone()
         self._initial_humanoid_root_states[:, 7:13] = 0
-
+    
         self._humanoid_actor_ids = num_actors * torch.arange(self.num_envs, device=self.device, dtype=torch.int32)
 
         # create some wrapper tensors for different slices
@@ -567,11 +567,14 @@ class Humanoid(BaseTask):
 
     def _reset_env_tensors(self, env_ids):
         env_ids_int32 = self._humanoid_actor_ids[env_ids]
+        # TAKARA      
+        
 
         self.gym.set_actor_root_state_tensor_indexed(self.sim, gymtorch.unwrap_tensor(self._root_states), gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
         self.gym.set_dof_state_tensor_indexed(self.sim, gymtorch.unwrap_tensor(self._dof_state), gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
-        
-        
+        # import ipdb; ipdb.set_trace()
+
+
         # print("#################### refreshing ####################")
         # print("rb", (self._rigid_body_state_reshaped[None, :] - self._rigid_body_state_reshaped[:, None]).abs().sum())
         # print("contact", (self._contact_forces[None, :] - self._contact_forces[:, None]).abs().sum())
@@ -580,7 +583,10 @@ class Humanoid(BaseTask):
         # print("root_states", (self._humanoid_root_states[None, :] - self._humanoid_root_states[:, None]).abs().sum())
         # print("#################### refreshing ####################")
 
-        self.progress_buf[env_ids] = 0
+        # self.progress_buf[env_ids] = 0
+        
+        self.progress_buf[env_ids] = 0 # 200 # TAKARA: 
+
         self.reset_buf[env_ids] = 0
         self._terminate_buf[env_ids] = 0
         self._contact_forces[env_ids] = 0
@@ -1187,12 +1193,40 @@ class Humanoid(BaseTask):
                 else:
                     body_shape_params = self.humanoid_shapes[env_ids]
                 obs = compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, self._dof_obs_size, self._dof_offsets, body_shape_params, self._local_root_obs, self._root_height_obs, self._has_upright_start, self._has_shape_obs)
-            else:
-                obs = compute_humanoid_observations(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, self._local_root_obs, self._root_height_obs, self._dof_obs_size, self._dof_offsets)
+            
+            
+            
+        # TAKARA EDIT
+        if (env_ids is None):
+            root_pos = self._rigid_body_pos[:, 0, :]
+            root_rot = self._rigid_body_rot[:, 0, :]
+            root_vel = self._rigid_body_vel[:, 0, :]
+            root_ang_vel = self._rigid_body_ang_vel[:, 0, :]
+            dof_pos = self._dof_pos
+            dof_vel = self._dof_vel
+            key_body_pos = self._rigid_body_pos[:, self._key_body_ids, :]
+        else:
+            root_pos = self._rigid_body_pos[env_ids][:, 0, :]
+            root_rot = self._rigid_body_rot[env_ids][:, 0, :]
+            root_vel = self._rigid_body_vel[env_ids][:, 0, :]
+            root_ang_vel = self._rigid_body_ang_vel[env_ids][:, 0, :]
+            dof_pos = self._dof_pos[env_ids]
+            dof_vel = self._dof_vel[env_ids]
+            key_body_pos = self._rigid_body_pos[env_ids][:, self._key_body_ids, :]
+
+        if (env_ids is None):
+            body_shape_params = self.humanoid_shapes
+        else:
+            body_shape_params = self.humanoid_shapes[env_ids]
+        x = compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, self._dof_obs_size, self._dof_offsets, body_shape_params, self._local_root_obs, self._root_height_obs, self._has_upright_start, self._has_shape_obs)
+        
         return obs
 
     def _reset_actors(self, env_ids):
-        self._humanoid_root_states[env_ids] = self._initial_humanoid_root_states[env_ids]
+        # import ipdb; ipdb.set_trace() # takara 
+
+
+        self._humanoid_root_states[env_ids] = self._initial_humanoid_root_states[env_ids] 
         self._dof_pos[env_ids] = self._initial_dof_pos[env_ids]
         self._dof_vel[env_ids] = self._initial_dof_vel[env_ids]
         return
@@ -1204,7 +1238,7 @@ class Humanoid(BaseTask):
         self.actions = actions.to(self.device).clone()
         if len(self.actions.shape) == 1:
             self.actions = self.actions[None, ]
-            
+        # import ipdb; ipdb.set_trace()   
         if (self._pd_control):
             if self.humanoid_type in ["smpl", "smplh", "smplx"]:
                 if self.reduce_action:
@@ -1294,11 +1328,10 @@ class Humanoid(BaseTask):
         # This is after stepping, so progress buffer got + 1. Compute reset/reward do not need to forward 1 timestep since they are for "this" frame now.
         if not self.paused:
             self.progress_buf += 1
-            
         
         if self.self_obs_v == 2:
             self._update_tensor_history()
-            
+        # import ipdb;ipdb.set_trace()
         self._refresh_sim_tensors()
         self._compute_reward(self.actions)  # ZL swapped order of reward & objecation computes. should be fine.
         self._compute_reset() 
@@ -1551,7 +1584,6 @@ def compute_humanoid_reward(obs_buf):
 def compute_humanoid_reset(reset_buf, progress_buf, contact_buf, contact_body_ids, rigid_body_pos, max_episode_length, enable_early_termination, termination_heights):
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, float, bool, Tensor) -> Tuple[Tensor, Tensor]
     terminated = torch.zeros_like(reset_buf)
-
     if (enable_early_termination):
         masked_contact_buf = contact_buf.clone()
         masked_contact_buf[:, contact_body_ids, :] = 0
@@ -1598,7 +1630,7 @@ def remove_base_rot(quat):
     return quat_mul(quat, base_rot.repeat(shape, 1))
 
 
-@torch.jit.script
+# @torch.jit.script
 def compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, dof_obs_size, dof_offsets, smpl_params, local_root_obs, root_height_obs, upright, has_smpl_params):
     # type: (Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, Tensor, int, List[int], Tensor, bool, bool,bool, bool) -> Tensor
     root_h = root_pos[:, 2:3]
@@ -1631,7 +1663,8 @@ def compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_ve
     flat_local_key_pos = local_end_pos.view(local_key_body_pos.shape[0], local_key_body_pos.shape[1] * local_key_body_pos.shape[2])
 
     dof_obs = dof_to_obs(dof_pos, dof_obs_size, dof_offsets)
-
+    # import ipdb;ipdb.set_trace()
+    
     obs_list = []
     if root_height_obs:
         obs_list.append(root_h_obs)
@@ -1643,8 +1676,11 @@ def compute_humanoid_observations_smpl(root_pos, root_rot, root_vel, root_ang_ve
         dof_vel,
         flat_local_key_pos,
     ]
+    
     if has_smpl_params:
         obs_list.append(smpl_params)
+    
+    # import ipdb;ipdb.set_trace()
     obs = torch.cat(obs_list, dim=-1)
 
     return obs

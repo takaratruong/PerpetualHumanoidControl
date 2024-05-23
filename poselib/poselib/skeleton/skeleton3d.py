@@ -418,6 +418,7 @@ class SkeletonState(Serializable):
         else:
             return self._global_rotation
 
+
     @property
     def global_translation(self):
         """ global translation of each joint """
@@ -929,6 +930,7 @@ class SkeletonMotion(SkeletonState):
         """ global velocity """
         curr_index = self.num_joints * 4 + 3
         return self.tensor[..., curr_index:curr_index + self.num_joints * 3].reshape(*(self.tensor.shape[:-1] + (self.num_joints, 3)))
+         
 
     @property
     def global_angular_velocity(self):

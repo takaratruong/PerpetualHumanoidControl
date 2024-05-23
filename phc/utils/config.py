@@ -446,6 +446,49 @@ def get_args(benchmark=False):
             "default": False,
             "help": "No SMPL_robot dependency"
         },
+        {
+            "name": "--m2t_map_path",
+            "default": None,
+            "type": str
+        },
+        {
+            "name": "--mode",
+            "default": None,
+            "required": True,
+            "type": str,
+            "choices": ['collect', 'diff', 'eval'],
+            "Help": "choose 'collect' or 'diff'"
+        },
+        {
+            "name": "--act_noise",
+            "default": 0.04,
+            "type": float
+        },
+        {
+            "name": "--collect_start_idx",
+            "default": 0,
+            "type": int
+        },
+        {
+            "name": "--collect_step_idx",
+            "default": 0,
+            "type": int
+        },
+        {
+            "name": "--obs_type",
+            "default": 'phc',
+            "type": str,
+            'choices': ['phc', 't2m', 'ref']
+        },
+        {
+            "name": "--ckpt_path",
+            "type": str,
+        },
+        {
+            "name": "--rand_start",
+            "action": "store_true",
+            "default": False,
+        }
     ]
 
     if benchmark:

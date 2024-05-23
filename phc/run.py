@@ -31,6 +31,7 @@ import os
 import sys
 import pdb
 import os.path as osp
+import ipdb 
 
 sys.path.append(os.getcwd())
 
@@ -47,6 +48,7 @@ from phc.utils.flags import flags
 
 import numpy as np
 import copy
+import random
 import torch
 import wandb
 
@@ -59,15 +61,21 @@ from learning import amp_network_builder
 from learning import amp_network_mcp_builder
 from learning import amp_network_pnn_builder
 
+# torch.multiprocessing.set_sharing_strategy('file_system') #Takara 
 
 from env.tasks import humanoid_amp_task
 
-args = None
-cfg = None
-cfg_train = None
+# import resource
+# rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
+# print(rlimit)
+# resource.setrlimit(resource.RLIMIT_NOFILE, (2000, rlimit[1]))
+
+# args = None
+# cfg = None
+# cfg_train = None
 
 
-def create_rlgpu_env(**kwargs):
+def create_rlgpu_env(args, cfg, cfg_train, **kwargs):
     use_horovod = cfg_train['params']['config'].get('multi_gpu', False)
     if use_horovod:
         import horovod.torch as hvd
@@ -147,8 +155,10 @@ class RLGPUEnv(vecenv.IVecEnv):
 
     def step(self, action):
         next_obs, reward, is_done, info = self.env.step(action)
-
+        # import ipdb; ipdb.set_trace() # TAKARA
+        print('action', action)
         # todo: improve, return only dictinary
+        # return None
         self.full_state["obs"] = next_obs
         if self.use_global_obs:
             self.full_state["states"] = self.env.get_state()
@@ -189,14 +199,14 @@ class RLGPUEnv(vecenv.IVecEnv):
         return info
 
 
-vecenv.register('RLGPU', lambda config_name, num_actors, **kwargs: RLGPUEnv(config_name, num_actors, **kwargs))
-env_configurations.register('rlgpu', {'env_creator': lambda **kwargs: create_rlgpu_env(**kwargs), 'vecenv_type': 'RLGPU'})
+# vecenv.register('RLGPU', lambda config_name, num_actors, **kwargs: RLGPUEnv(config_name, num_actors, **kwargs))
+# env_configurations.register('rlgpu', {'env_creator': lambda **kwargs: create_rlgpu_env(**kwargs), 'vecenv_type': 'RLGPU'})
 
 
 def build_alg_runner(algo_observer):
     runner = Runner(algo_observer)
     runner.player_factory.register_builder('amp_discrete', lambda **kwargs: amp_players.AMPPlayerDiscrete(**kwargs))
-    
+
     runner.algo_factory.register_builder('amp', lambda **kwargs: amp_agent.AMPAgent(**kwargs))
     runner.player_factory.register_builder('amp', lambda **kwargs: amp_players.AMPPlayerContinuous(**kwargs))
 
@@ -206,24 +216,34 @@ def build_alg_runner(algo_observer):
     runner.model_builder.network_factory.register_builder('amp_pnn', lambda **kwargs: amp_network_pnn_builder.AMPPNNBuilder())
     
     runner.algo_factory.register_builder('im_amp', lambda **kwargs: im_amp.IMAmpAgent(**kwargs))
+    
+    # ipdb.set_trace() # TAKARA    
     runner.player_factory.register_builder('im_amp', lambda **kwargs: im_amp_players.IMAMPPlayerContinuous(**kwargs))
     
     return runner
 
 
-def main():
-    global args
-    global cfg
-    global cfg_train
+def main(args):
+    # global args
+    # global cfg
+    # global cfg_train
 
     set_np_formatting()
-    args = get_args()
+    #args = get_args()
     cfg_env_name = args.cfg_env.split("/")[-1].split(".")[0]
 
     args.logdir = args.network_path
     cfg, cfg_train, logdir = load_cfg(args)
+
+    vecenv.register('RLGPU', lambda config_name, num_actors, **kwargs: RLGPUEnv(config_name, num_actors, **kwargs))
+    env_configurations.register('rlgpu', {'env_creator': lambda **kwargs: create_rlgpu_env(args, cfg, cfg_train,**kwargs), 'vecenv_type': 'RLGPU'})
+
+
     flags.debug, flags.follow, flags.fixed, flags.divide_group, flags.no_collision_check, flags.fixed_path, flags.real_path, flags.small_terrain, flags.show_traj, flags.server_mode, flags.slow, flags.real_traj, flags.im_eval, flags.no_virtual_display, flags.render_o3d = \
         args.debug, args.follow, False, False, False, False, False, args.small_terrain, True, args.server_mode, False, False, args.im_eval, args.no_virtual_display, args.render_o3d
+
+    flags.rand_start = args.rand_start
+
 
     flags.add_proj = args.add_proj
     flags.has_eval = args.has_eval
@@ -244,7 +264,8 @@ def main():
         cfg['env']['episodeLength'] = 99999999999999
         flags.real_traj = True
     
-
+    
+    # exp_name = vargs['exp_name'] # pass command line args to runner config
     project_name = cfg.get("project_name", "egoquest")
     if (not args.no_log) and (not args.test) and (not args.debug):
         wandb.init(
@@ -254,9 +275,10 @@ def main():
             notes=cfg.get("notes", "no notes"),
         )
         wandb.config.update(cfg, allow_val_change=True)
-        wandb.run.name = cfg_env_name
+        wandb.run.name = 'prim_cartwheels_failed3_subset3_retry_pnn' # exp_name #cfg_env_name
         wandb.run.save()
 
+    
     cfg_train['params']['seed'] = set_seed(cfg_train['params'].get("seed", -1), cfg_train['params'].get("torch_deterministic", False))
 
     if args.horovod:
@@ -283,15 +305,40 @@ def main():
 
     vargs = vars(args)
 
-    algo_observer = RLGPUAlgoObserver()
+    # Michael ==
+    cfg_train['params']['config']['mode'] = vargs['mode'] # pass command line args to runner config
+    cfg_train['params']['config']['m2t_map_path'] = vargs['m2t_map_path'] # pass command line args to runner config
+    if vargs['mode'] == 'diff':
+        assert vargs['m2t_map_path'] is not None, "For diff mode, provide m2t_map_path"
 
+    cfg['env']['act_noise'] = vargs['act_noise']
+    cfg['env']['collect_start_idx'] = vargs['collect_start_idx']
+    cfg['env']['collect_step_idx'] = vargs['collect_step_idx']
+    cfg['env']['m2t_map_path'] = vargs['m2t_map_path']
+    cfg['env']['mode'] = vargs['mode']
+    cfg_train['params']['config']['collect_start_idx'] = vargs['collect_start_idx']
+    cfg_train['params']['config']['collect_step_idx'] = vargs['collect_step_idx']
+    cfg_train['params']['config']['act_noise'] = vargs['act_noise']
+    cfg_train['params']['config']['obs_type'] = vargs['obs_type']
+    cfg_train['params']['config']['ckpt_path'] = vargs['ckpt_path']
+    # === 
+    # import ipdb; ipdb.set_trace() # TAKARA
+    
+    # seed_all(cfg_train['params']['seed'])
+
+    algo_observer = RLGPUAlgoObserver()
     runner = build_alg_runner(algo_observer)
     runner.load(cfg_train)
     runner.reset()
     runner.run(vargs)
-
     return
 
 
+# def seed_all(seed):
+#     random.seed(seed)
+#     torch.manual_seed(seed)
+#     torch.cuda.manual_seed(seed)
+#     np.random.seed(seed)
+
 if __name__ == '__main__':
-    main()
+    main(get_args())

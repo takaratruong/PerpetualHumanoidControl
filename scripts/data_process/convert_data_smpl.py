@@ -112,7 +112,7 @@ for key_name in tqdm(amass_data.keys()):
 
             new_sk_state = SkeletonState.from_rotation_and_root_translation(skeleton_tree, torch.from_numpy(pose_quat_global), root_trans_offset, is_local=False)
             pose_quat = new_sk_state.local_rotation.numpy()
-
+            
             ############################################################
             # key_name_dump = key_name + f"_{idx}"
             key_name_dump = key_name

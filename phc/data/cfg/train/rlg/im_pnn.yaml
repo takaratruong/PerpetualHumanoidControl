@@ -41,8 +41,42 @@ params:
       initializer:
         name: default
 
-  load_checkpoint: False
+  load_checkpoint: True # True
+  load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset3_retry/Humanoid_00001000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset3/Humanoid_00048500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset3/Humanoid_00048500.pth
 
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_sitdown_failed2/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_basketball/Humanoid_00057500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_fourth_throw/Humanoid_00057500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_second_floor/Humanoid_00058500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_throw/Humanoid_00057000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels/Humanoid_00033000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ballet/Humanoid_00025000.pth
+
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_limp_failed1_subset1_retry/Humanoid_00033500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_limp/Humanoid_00139500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_throw_failed1_subset2/Humanoid_00032000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_throw_failed1_subset2/Humanoid_00064500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_weirdwalks/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_roll/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_backflips/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_breakdance/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_kickspunches/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_scamper_failed3/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_handstand_failed3_subset1/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_backflips_failed2_subset1/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup_failed2_subset1/Humanoid.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_ground2getup/Humanoid_00032000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_cartwheels_failed3_subset1/Humanoid_00055000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_handstands_failed3_subset1_retry/Humanoid_00031500.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_floorposes/Humanoid_00046000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_kickspunches/Humanoid_00092000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_sprints/Humanoid_00094000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_second_sprints/Humanoid_00107000.pth
+  # load_path: /move/u/takaraet/PerpetualHumanoidControl/output/phc_prim_pnn_roll/Humanoid_00060000.pth
   config:
     name: Humanoid
     env_name: rlgpu
@@ -61,7 +95,7 @@ params:
     score_to_win: 20000
     max_epochs: 10000000
     save_best_after: 100
-    save_frequency: 2500
+    save_frequency: 500
     print_stats: False
     save_intermediate: True
     entropy_coef: 0.0
@@ -70,7 +104,7 @@ params:
     ppo: True
     e_clip: 0.2
     horizon_length: 32
-    minibatch_size: 16384
+    minibatch_size: 16000 # 1600 #3200 #16000 #16384
     mini_epochs: 6
     critic_coef: 5
     clip_value: False
@@ -80,16 +114,16 @@ params:
     amp_replay_buffer_size: 200000
     amp_replay_keep_prob: 0.01
     amp_batch_size: 512
-    amp_minibatch_size: 4096
+    amp_minibatch_size: 4096 #1600 #3200 #4096
     disc_coef: 5
     disc_logit_reg: 0.01
     disc_grad_penalty: 5
     disc_reward_scale: 2
     disc_weight_decay: 0.0001
     normalize_amp_input: True
-
-    task_reward_w: 0.5
-    disc_reward_w: 0.5
+    
+    task_reward_w: .9 #0.5
+    disc_reward_w: .1 ##0.5
 
     player: 
       games_num: 50000000

@@ -167,22 +167,20 @@ def read_seq_data(folder, nsubjects, fps):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--dir", type=str, help="dataset directory", default="data/amass"
+        "--dir", type=str, help="dataset directory", default="phc/data/amass"
     )
     parser.add_argument(
         "--out_dir", type=str, help="dataset directory", default="out"
     )
-    parser.add_argument(
-        '--sequences', type=str, nargs='+', help='which sequences to use', default=all_sequences
-    )
-
+    print('start')
     args = parser.parse_args()
     out_path = Path(args.out_dir)
     out_path.mkdir(exist_ok=True)
     db_file = osp.join(out_path, "amass_db_smplh.pt")
+    
+    # db = read_data(args.dir, sequences=args.sequences)
+    db = read_data(args.dir, sequences="all")
 
-    db = read_data(args.dir, sequences=args.sequences)
-     
     
     print(f"Saving AMASS dataset to {db_file}")
     joblib.dump(db, db_file)

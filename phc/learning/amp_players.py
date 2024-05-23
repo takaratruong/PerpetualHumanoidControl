@@ -60,8 +60,12 @@ class AMPPlayerContinuous(common_player.CommonPlayer):
     #                                torch.clamp(current_action, -1.0, 1.0))
     #     else:
     #         return current_action
-
+    
     def restore(self, fn):
+        print(fn)
+        #fn = 'output/phc_shape_mcp_iccv/Humanoid.pth'
+        if self.mode == 'diff': # Michael - if we are in diff mode, don't load checkpoint
+            return
         super().restore(fn)
         if self._normalize_amp_input:
             checkpoint = torch_ext.load_checkpoint(fn)

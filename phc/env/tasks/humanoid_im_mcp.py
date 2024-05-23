@@ -19,8 +19,17 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
         self.has_lateral = cfg["env"].get("has_lateral", False)
         self.z_activation = cfg["env"].get("z_activation", "relu")
 
-        super().__init__(cfg=cfg, sim_params=sim_params, physics_engine=physics_engine, device_type=device_type, device_id=device_id, headless=headless)
+        self.act_noise = cfg['env'].get('act_noise', None) # Michael
+        assert self.act_noise is not None
+        print(f'Using action noise level: {self.act_noise}')
 
+        self.act_collect = None 
+        self.mean_action = None
+        self.noisy_action = None
+        self.use_noisy_action = False 
+
+        super().__init__(cfg=cfg, sim_params=sim_params, physics_engine=physics_engine, device_type=device_type, device_id=device_id, headless=headless)
+        
         if self.has_pnn:
             assert (len(self.models_path) == 1)
             pnn_ck = torch_ext.load_checkpoint(self.models_path[0])
@@ -41,7 +50,7 @@ class HumanoidImMCP(humanoid_im.HumanoidIm):
         task_obs_detail['num_prim'] = self.num_prim
         return task_obs_detail
 
-    def step(self, weights):
+    def step(self, weights): # TAkara Edit
 
         # if self.dr_randomizations.get('actions', None):
         #     actions = self.dr_randomizations['actions']['noise_lambda'](actions)

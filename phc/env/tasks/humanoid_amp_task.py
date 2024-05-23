@@ -33,7 +33,7 @@ from phc.utils.flags import flags
 class HumanoidAMPTask(humanoid_amp.HumanoidAMP):
     def __init__(self, cfg, sim_params, physics_engine, device_type, device_id, headless):
         self._enable_task_obs = cfg["env"]["enableTaskObs"]
-
+        
         super().__init__(cfg=cfg,
                          sim_params=sim_params,
                          physics_engine=physics_engine,
@@ -42,13 +42,14 @@ class HumanoidAMPTask(humanoid_amp.HumanoidAMP):
                          headless=headless)
         self.has_task = True
         return
-
+        
 
     def get_obs_size(self):
         obs_size = super().get_obs_size()
         if (self._enable_task_obs):
             task_obs_size = self.get_task_obs_size()
             obs_size += task_obs_size
+        # print("obs_size: ", obs_size) #Takara 
         return obs_size
 
     def get_task_obs_size(self):
@@ -59,7 +60,7 @@ class HumanoidAMPTask(humanoid_amp.HumanoidAMP):
         self._update_task()
         
         return
-
+        
     def render(self, sync_frame_time=False):
         super().render(sync_frame_time)
 
@@ -90,7 +91,7 @@ class HumanoidAMPTask(humanoid_amp.HumanoidAMP):
         else:
             obs = humanoid_obs
         
-                
+
         if self.obs_v == 2:
             # Double sub will return a copy.
             B, N = obs.shape

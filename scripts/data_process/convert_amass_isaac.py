@@ -38,7 +38,7 @@ def run(in_file: str, out_file: str):
 
     smpl_local_robot = LocalRobot(
         robot_cfg,
-        data_dir="data/smpl",
+        data_dir="phc/data/smpl",
     )
 
     amass_data = joblib.load(in_file)
@@ -122,7 +122,7 @@ def run(in_file: str, out_file: str):
                     pose_quat_global = pose_quat_global[:, left_to_right_index]
                     pose_quat_global[..., 0] *= -1
                     pose_quat_global[..., 2] *= -1
-
+                
                     root_trans_offset[..., 1] *= -1
                 ############################################################
 

@@ -61,7 +61,7 @@ import gc
 from phc.utils.flags import flags
 from collections import OrderedDict
 
-HACK_MOTION_SYNC = False
+HACK_MOTION_SYNC = False 
 # HACK_MOTION_SYNC = True
 HACK_CONSISTENCY_TEST = False
 HACK_OUTPUT_MOTION = False
@@ -105,18 +105,23 @@ class HumanoidAMP(Humanoid):
 
         super().__init__(cfg=cfg, sim_params=sim_params, physics_engine=physics_engine, device_type=device_type, device_id=device_id, headless=headless)
 
-        self._motion_start_times = torch.zeros(self.num_envs).to(self.device)
+        self._motion_start_times = torch.zeros(self.num_envs).to(self.device) # + 52.2667 
         self._sampled_motion_ids = torch.zeros(self.num_envs).long().to(self.device)
+        # print("motion_file")
+        # print('-'*50)
         motion_file = cfg['env']['motion_file']
-        self._load_motion(motion_file)
 
+        self._load_motion(motion_file) # call to humanoid_im.py line 283 load_motions 
+        
+        # import ipdb
+        # ipdb.set_trace()
         self._amp_obs_buf = torch.zeros((self.num_envs, self._num_amp_obs_steps, self._num_amp_obs_per_step), device=self.device, dtype=torch.float)
         self._curr_amp_obs_buf = self._amp_obs_buf[:, 0]
         self._hist_amp_obs_buf = self._amp_obs_buf[:, 1:]
 
         self._amp_obs_demo_buf = None
 
-        data_dir = "data/smpl"
+        data_dir = "phc/data/smpl"
         self.smpl_parser_n = SMPL_Parser(model_path=data_dir, gender="neutral").to(self.device)
         self.smpl_parser_m = SMPL_Parser(model_path=data_dir, gender="male").to(self.device)
         self.smpl_parser_f = SMPL_Parser(model_path=data_dir, gender="female").to(self.device)
@@ -174,20 +179,21 @@ class HumanoidAMP(Humanoid):
     def pre_physics_step(self, actions):
         if (HACK_MOTION_SYNC or HACK_CONSISTENCY_TEST):
             actions *= 0
-
+        # print("pre_physics_step")
+        # print(actions.shape)
+        # print(actions)
         super().pre_physics_step(actions)
         return
     
     def get_task_obs_size_detail(self):
         task_obs_detail = OrderedDict()
 
-
+    
         return task_obs_detail
 
     def post_physics_step(self):
         super().post_physics_step()
 
-       
         if (HACK_MOTION_SYNC):
             self._hack_motion_sync()
 
@@ -294,7 +300,7 @@ class HumanoidAMP(Humanoid):
                 self._num_amp_obs_per_step = 13 + self._dof_obs_size + len(self._dof_names) * 3 + 3 * num_key_bodies  # [root_h, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos]
             else:
                 self._num_amp_obs_per_step = 13 + self._dof_obs_size + len(self._dof_names) * 3 + 6 * num_key_bodies  # [root_h, root_rot, root_vel, root_ang_vel, dof_pos, dof_vel, key_body_pos, key_body_vel]
-
+            
             if not self._amp_root_height_obs:
                 self._num_amp_obs_per_step -= 1
 
@@ -334,7 +340,7 @@ class HumanoidAMP(Humanoid):
         else:
             self._motion_lib = MotionLib(motion_file=motion_file, dof_body_ids=self._dof_body_ids, dof_offsets=self._dof_offsets, key_body_ids=self._key_body_ids.cpu().numpy(), device=self.device)
 
-        return
+    #     return
 
     def _reset_envs(self, env_ids):
         self._reset_default_env_ids = []
@@ -440,6 +446,8 @@ class HumanoidAMP(Humanoid):
         
         num_envs = env_ids.shape[0]
         motion_ids = self._motion_lib.sample_motions(num_envs)
+        
+        # print('_sample_ref_state', motion_ids) # TAKARA 
 
         if (self._state_init == HumanoidAMP.StateInit.Random or self._state_init == HumanoidAMP.StateInit.Hybrid):
             motion_times = self._sample_time(motion_ids)
@@ -461,6 +469,27 @@ class HumanoidAMP(Humanoid):
         num_envs = env_ids.shape[0]
         motion_ids, motion_times, root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, rb_pos, rb_rot, body_vel, body_ang_vel = self._sample_ref_state(env_ids)
         
+        # import ipdb; ipdb.set_trace()
+        #TAKARA
+    
+        # if flags.rand_start:
+
+        #     max_times = self._motion_lib._motion_lengths[motion_ids] 
+        #     #randomly sample time from 0 to max_times-1 where max_times is in seconds 
+        #     motion_times = torch.rand(num_envs, device=self.device) * (max_times-1) 
+        #     motion_times[motion_times < 0] = 0
+
+        #     # motion_times = 
+        #     # motion_times+=10
+
+        #     motion_res = self._get_state_from_motionlib_cache(motion_ids, motion_times)
+        #     root_pos, root_rot, dof_pos, root_vel, root_ang_vel, dof_vel, smpl_params, limb_weights, pose_aa, rb_pos, rb_rot, body_vel, body_ang_vel = \
+        #         motion_res["root_pos"], motion_res["root_rot"], motion_res["dof_pos"], motion_res["root_vel"], motion_res["root_ang_vel"], motion_res["dof_vel"], \
+        #         motion_res["motion_bodies"], motion_res["motion_limb_weights"], motion_res["motion_aa"], motion_res["rg_pos"], motion_res["rb_rot"], motion_res["body_vel"], motion_res["body_ang_vel"]
+
+        #     env_ids = torch.arange(self.num_envs, dtype=torch.long, device=self.device)
+        #     self._set_env_state(env_ids=env_ids, root_pos=root_pos, root_rot=root_rot, dof_pos=dof_pos, root_vel=root_vel, root_ang_vel=root_ang_vel, dof_vel=dof_vel, rigid_body_pos=rb_pos, rigid_body_rot=rb_rot, rigid_body_vel=body_vel, rigid_body_ang_vel=body_ang_vel)
+
         # if flags.debug:
         # print('raising for debug')
         # root_pos[..., 2] += 0.5
@@ -594,7 +623,7 @@ class HumanoidAMP(Humanoid):
         self.gym.refresh_actor_root_state_tensor(self.sim)
         self.gym.refresh_rigid_body_state_tensor(self.sim)
 
-        if self._state_reset_happened and "_reset_rb_pos" in self.__dict__:
+        if self._state_reset_happened: # and "_reset_rb_pos" in self.__dict__:
             # ZL: Hack to get rigidbody pos and rot to be the correct values. Needs to be called after _set_env_state
             # Also needs to be after refresh_rigid_body_state_tensor
             env_ids = self._reset_ref_env_ids
@@ -668,9 +697,10 @@ class HumanoidAMP(Humanoid):
 
     def _hack_motion_sync(self):
 
-        if (not hasattr(self, "_hack_motion_time")):
-            self._hack_motion_time = 0.0
-
+        # if (not hasattr(self, "_hack_motion_time")):
+        # self._hack_motion_time = 52.2667 
+        import ipdb; ipdb.set_trace() # Takara  
+        
         num_motions = self._motion_lib.num_motions()
         motion_ids = np.arange(self.num_envs, dtype=np.int)
         motion_ids = torch.from_numpy(np.mod(motion_ids, num_motions))

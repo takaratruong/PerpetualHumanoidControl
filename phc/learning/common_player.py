@@ -25,7 +25,7 @@ class CommonPlayer(players.PpoPlayerContinuous):
         self._build_net(net_config)
         self.first = True
         return
-
+        
     def run(self):
         n_games = self.games_num
         render = self.render_env
@@ -285,6 +285,7 @@ class CommonPlayerDiscrete(players.PpoPlayerDiscrete):
                     # joblib.dump(action, "a.pkl")
                     # joblib.load("a.pkl")[0] - action[0]
                     obs_dict, r, done, info = self.env_step(self.env, action)
+
 
                     cr += r
                     steps += 1
