@@ -633,8 +633,8 @@ class IMAMPPlayerContinuous(amp_players.AMPPlayerContinuous):
                         #     obs_store[~done_envs, n, :] = observation[~done_envs, :]
                         
                     # Step the environment 
-                    obs_dict, r, done, info = self.env_step(self.env, action_dict['action'][:,0,:] )
-                    # obs_dict, r, done, info = self.env_step(self.env, action)
+                    # obs_dict, r, done, info = self.env_step(self.env, action_dict['action'][:,0,:] )
+                    obs_dict, r, done, info = self.env_step(self.env, action)
 
                     # if not text_change_flag:
                     #     obs_dict, r, done, info = self.env_step(self.env, action)
